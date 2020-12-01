@@ -1,1 +1,2 @@
-# moca-merchant-php-sdk
+# Mex backend SDK - PHP
+
