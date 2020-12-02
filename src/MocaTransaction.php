@@ -60,21 +60,21 @@ class MocaTransaction
             );
 
             $resp = MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody);
-            $obj = json_decode($resp);
-            $scope = 'payment.vn.one_time_charge';
-            $codeVerifier = self::base64URLEncode(generateRandomString(64));
-            $codeChallenge = self::base64URLEncode(hash('sha256', $codeVerifier));
 
-            if ($obj->{'request'} != '') {
+            $bodyResp = $resp->body;
+
+            if ($resp->code == 200) {
+                
+                $scope = 'payment.vn.one_time_charge';
+                $codeVerifier = self::base64URLEncode(generateRandomString(64));
+                $codeChallenge = self::base64URLEncode(hash('sha256', $codeVerifier));
                 self::setCodeVerifier($codeChallenge);
                 return MocaTransaction::apiEndpoint().'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
                     '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.self::generateRandomString(16).
-                    '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$obj->{'request'}.'&response_type=code&scope='.$scope.'&state='.self::generateRandomString(7);
+                    '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.self::generateRandomString(7);
             } else {
-                return $resp;
+                return $bodyResp;
             }
-
-
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
