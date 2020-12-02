@@ -46,7 +46,7 @@ class MocaRestClient {
         $now = self::now();
         $credentials = array();
 
-        if (getenv('MOCA_MERCHANT_PARTNER_ID') == "POS") {
+        if (getenv('MOCA_MERCHANT_TYPE') == "POS") {
             $terminalID = getenv('MOCA_MERCHANT_TERMINAL_ID');
             $credentials = array(
                 'msgID' => $msgID,
@@ -73,6 +73,13 @@ class MocaRestClient {
             'Authorization' => ($partnerID . ':' . $hmac)
         );
         $response = null;
+
+        var_dump("requestMethod: "+$requestMethod);echo "\n";
+        var_dump("apiUrl: "+ $apiUrl);echo "\n";
+        var_dump("contentType: "+ $contentType);echo "\n";
+        var_dump("requestBody: "+ $requestBody);echo "\n";
+        var_dump("Time: "+ $now);echo "\n";
+        var_dump("hmac: "+ $hmac);echo "\n";
 
         switch ($requestMethod) {
             case 'GET':
