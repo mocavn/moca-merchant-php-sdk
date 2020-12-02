@@ -13,8 +13,8 @@ class MocaRestClient {
 	}
 
 	private static function now() {
-		$now = new DateTime('NOW');
-		return $now->format(DateTime::RFC7231);
+		$now = new \DateTime('NOW');
+		return $now->format(\DateTime::RFC7231);
 	}
 
 	private static function sha256($data) {
