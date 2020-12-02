@@ -1,6 +1,6 @@
 <?php
 
-namespace MocaMerchant;
+namespace Moca\Merchant;
 
 class MocaTransaction
 {
