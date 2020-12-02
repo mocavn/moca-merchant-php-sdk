@@ -76,15 +76,15 @@ class MocaRestClient {
 
         switch ($requestMethod) {
             case 'GET':
-                $response = Unirest\Request::get($url, $headers);
+                $response = Unirest::get($url, $headers);
                 break;
 
             case 'POST':
-                $response = Unirest\Request::post($url, $headers, $requestBody);
+                $response = Unirest::post($url, $headers, $requestBody);
                 break;
 
             case 'PUT':
-                $response = Unirest\Request::put($url, $headers, $requestBody);
+                $response = Unirest::put($url, $headers, $requestBody);
                 break;
         }
         return $response;
