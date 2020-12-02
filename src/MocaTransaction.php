@@ -25,7 +25,7 @@ class MocaTransaction
     private $originTxID;
 
     // 1. getRequest use for app to app
-    public static function getRequest() {
+    public function getRequest() {
         try {
             $requestBody = array(
                 'partnerTxID'       => self::getPartnerTxID(),
@@ -46,7 +46,7 @@ class MocaTransaction
     }
 
     // 1. createDeeplinkUrl use for web to app
-    public static function createDeeplinkUrl() {
+    public function createDeeplinkUrl() {
         try {
             $requestBody = array(
                 'partnerTxID'       => self::getPartnerTxID(),
@@ -81,7 +81,7 @@ class MocaTransaction
     }
 
     // 2. oAuthToken to get token to complete, check charge status and refund transaction
-    public static function oAuthToken() {
+    public function oAuthToken() {
         try {
             $requestBody = array(
                 'grant_type'    => "authorization_code",
@@ -106,7 +106,7 @@ class MocaTransaction
     }
 
     // 3. chargeComplete to finished transaction
-    public static function chargeComplete() {
+    public function chargeComplete() {
         try {
             $requestBody = array(
                 'partnerTxID'       => self::getPartnerTxID(),
@@ -125,7 +125,7 @@ class MocaTransaction
     }
 
     // 4. getChargeStatus to check status end of transaction
-    public static function getChargeStatus() {
+    public function getChargeStatus() {
         try {
             $uri = 'mocapay/partner/v2/charge/'.self::getPartnerTxID().'/status?currency='.self::getCurrency();
 
@@ -136,7 +136,7 @@ class MocaTransaction
     }
 
     // 5. RefundTxn to refund transaction
-    public static function RefundTxn() {
+    public function RefundTxn() {
         try {
             $requestBody = array(
                 'partnerTxID'       => self::getPartnerTxID(),
@@ -155,7 +155,7 @@ class MocaTransaction
     }
 
     // 6. getRefundStatus to check status end of transaction
-    public static function getRefundStatus() {
+    public function getRefundStatus() {
         try {
             $uri = 'mocapay/partner/v2/refund/'.self::getPartnerTxID().'/status?currency='.self::getCurrency();
 
@@ -165,7 +165,7 @@ class MocaTransaction
         }
     }
 
-    private static function generateRandomString($length) {
+    private function generateRandomString($length) {
         $text = '';
         $possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         for ( $i = 0; $i < $length; $i++) {
@@ -174,7 +174,7 @@ class MocaTransaction
         return $text;
     }
 
-    private static function base64URLEncode($str) {
+    private function base64URLEncode($str) {
         return str_replace(['=', '+', '/'], ['', '-', '_'], ($str));
     }
 
