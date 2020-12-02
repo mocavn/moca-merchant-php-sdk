@@ -65,7 +65,7 @@ class MocaRestClient {
             $requestBody = array_merge($requestBody, $credentials);
         }
 
-        $hmac = self::generateHmacOnA($requestMethod, $apiUrl, $contentType, $requestBody, $now);
+        $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
         $headers = array(
             'Accept' => 'application/json',
             'Content-Type' => $contentType,
