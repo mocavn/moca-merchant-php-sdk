@@ -32,7 +32,7 @@ class MocaRestClient {
 		$content .= '\n';
 		$content .= $apiUrl;
 		$content .= '\n';
-		$content .= strlen($body) > 0 ? self::sha256($requestBody) : '';
+		$content .= strlen($requestBody) > 0 ? self::sha256($requestBody) : '';
 		$content .= '\n';
 
 		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
