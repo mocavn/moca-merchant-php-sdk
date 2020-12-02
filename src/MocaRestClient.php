@@ -74,12 +74,12 @@ class MocaRestClient {
         );
         $response = null;
 
-        var_dump("requestMethod: "+$requestMethod);echo "\n";
-        var_dump("apiUrl: "+ $apiUrl);echo "\n";
-        var_dump("contentType: "+ $contentType);echo "\n";
-        var_dump("requestBody: "+ $requestBody);echo "\n";
-        var_dump("Time: "+ $now);echo "\n";
-        var_dump("hmac: "+ $hmac);echo "\n";
+        console_log($requestMethod);
+        console_log($apiUrl);
+        console_log($contentType);
+        console_log($requestBody);
+        console_log($now);
+        console_log($hmac);
         die();
 
         switch ($requestMethod) {
@@ -109,5 +109,16 @@ class MocaRestClient {
 	public static function put($apiUrl, $requestBody) {
 		return self::sendRequest('PUT', $apiUrl, 'application/json', $requestBody);
 	}
+
+    function console_log( ...$messages ) {
+        $msgs = '';
+        foreach ($messages as $msg) {
+            $msgs .= json_encode($msg);
+        }
+
+        echo '<script>';
+        echo 'console.log('. json_encode($msgs) .')';
+        echo '</script>';
+    }
 
 }
