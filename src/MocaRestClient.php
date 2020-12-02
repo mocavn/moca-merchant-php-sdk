@@ -80,11 +80,11 @@ class MocaRestClient {
                 break;
 
             case 'POST':
-                $response = \Unirest\Request::post($url, $headers, $requestBody);
+                $response = \Unirest\Request::post($url, $headers, serialize($requestBody));
                 break;
 
             case 'PUT':
-                $response = \Unirest\Request::put($url, $headers, $requestBody);
+                $response = \Unirest\Request::put($url, $headers, serialize($requestBody));
                 break;
         }
         return $response;
