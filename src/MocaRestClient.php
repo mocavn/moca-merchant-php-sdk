@@ -74,12 +74,9 @@ class MocaRestClient {
         );
         $response = null;
 
-        console_log($requestMethod);
-        console_log($apiUrl);
-        console_log($contentType);
-        console_log($requestBody);
-        console_log($now);
-        console_log($hmac);
+        echo '<pre>';
+        var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
+        echo '</pre>';
         die();
 
         switch ($requestMethod) {
@@ -109,16 +106,5 @@ class MocaRestClient {
 	public static function put($apiUrl, $requestBody) {
 		return self::sendRequest('PUT', $apiUrl, 'application/json', $requestBody);
 	}
-
-    function console_log( ...$messages ) {
-        $msgs = '';
-        foreach ($messages as $msg) {
-            $msgs .= json_encode($msg);
-        }
-
-        echo '<script>';
-        echo 'console.log('. json_encode($msgs) .')';
-        echo '</script>';
-    }
 
 }
