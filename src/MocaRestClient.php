@@ -80,6 +80,7 @@ class MocaRestClient {
         var_dump("requestBody: "+ $requestBody);echo "\n";
         var_dump("Time: "+ $now);echo "\n";
         var_dump("hmac: "+ $hmac);echo "\n";
+        die();
 
         switch ($requestMethod) {
             case 'GET':
