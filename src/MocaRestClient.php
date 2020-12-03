@@ -53,10 +53,10 @@ class MocaRestClient {
             $requestBody = '';
         }
         
-        $hashedPayload = base64_encode(hash('sha256', $requestBody, true));
+        $hashedPayload = base64_encode(hash('sha256', json_encode($requestBody), true));
         $requestData = $httpMethod . "\n" . $contentType . "\n" . $timestamp . "\n" . $requestPath . "\n" .  $hashedPayload . "\n";
         
-        $hmacDigest = base64_encode(hash_hmac('sha256', $requestData, $partnerSecret, true));
+        $hmacDigest = base64_encode(hash_hmac('sha256', json_encode($requestData), $partnerSecret, true));
         $authHeader = $partnerID . ':' . $hmacDigest;
         
         return $authHeader;
