@@ -83,7 +83,7 @@ class MocaRestClient {
         echo '<pre>';
         var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
         echo '</pre>';
-        die();
+        // die();
 
         $requestBody = \Unirest\Request\Body::json($requestBody);
 
