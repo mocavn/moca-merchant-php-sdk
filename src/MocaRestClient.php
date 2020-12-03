@@ -23,6 +23,7 @@ class MocaRestClient {
 
 	private static function generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $date) {
 		$body = json_encode($requestBody);
+        echo $requestBody . PHP_EOL.PHP_EOL;
         $hashedPayload = self::sha256($body);
 		$content = '';
 		$content .= $requestMethod;
@@ -37,9 +38,7 @@ class MocaRestClient {
 		$content .= "\n";
 
 
-        echo '<pre>';
-        var_dump($body,strlen($body) > 0 ? self::sha256($body) : '',$content);
-        echo '</pre>';
+        printf("String to sign = %s\n\n", $content);
 
 		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
 	}
