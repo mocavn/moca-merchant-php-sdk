@@ -35,8 +35,8 @@ class MocaRestClient {
 		$content .= "\n";
 		$content .= $hashedPayload;
 		$content .= "\n";
-        $content .= '';
 
+        printf("String to sign = %s\n\n", $content);
 
         echo '<pre>';
         var_dump(strlen($body) > 0 ? self::sha256($body) : '',$content);
