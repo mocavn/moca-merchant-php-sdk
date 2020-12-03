@@ -18,7 +18,7 @@ class MocaRestClient {
 	}
 
 	private static function sha256($data) {
-		return base64_encode(hash('sha256', $data, true));
+		return base64_encode(hash('sha256', $data));
 	}
 
 	private static function generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $date) {
@@ -35,14 +35,14 @@ class MocaRestClient {
 		$content .= strlen($body) > 0 ? self::sha256($body) : '';
 		$content .= '\n';
 
-		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
+		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET')));
 	}
 
 	private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody) {
         $partnerID = getenv('MOCA_MERCHANT_PARTNER_ID');
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
-        
+        $url = (self::apiEndpoint() . $apiUrl);
         $now = self::now();
         $credentials = array();
 
@@ -65,9 +65,7 @@ class MocaRestClient {
             $requestBody = array_merge($requestBody, $credentials);
         }
 
-        $url = (self::apiEndpoint() . $apiUrl);
-
-        $hmac = self::generateHmac($requestMethod, $url, $contentType, $requestBody, $now);
+        $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
         $headers = array(
             'Accept' => 'application/json',
             'Content-Type' => $contentType,
@@ -77,7 +75,7 @@ class MocaRestClient {
         $response = null;
 
         echo '<pre>';
-        var_dump($requestMethod, $url, $contentType, $requestBody, $now, $hmac);
+        var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
         echo '</pre>';
         die();
 
