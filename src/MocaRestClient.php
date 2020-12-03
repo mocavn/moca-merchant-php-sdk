@@ -77,7 +77,7 @@ class MocaRestClient {
         $response = null;
 
         echo '<pre>';
-        var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
+        var_dump($requestMethod, $url, $contentType, $requestBody, $now, $hmac);
         echo '</pre>';
         die();
 
