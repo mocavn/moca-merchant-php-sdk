@@ -35,6 +35,7 @@ class MocaRestClient {
 		$content .= "\n";
 		$content .= $hashedPayload;
 		$content .= "\n";
+        $content .= '';
 
 
         echo '<pre>';
