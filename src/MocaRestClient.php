@@ -48,7 +48,7 @@ class MocaRestClient {
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
         $url = (self::apiEndpoint() . $apiUrl);
-        $now = 'Thu, 03 Dec 2020 05:25:26 GMT';//self::now();
+        $now = self::now();
         $credentials = array();
 
         if (getenv('MOCA_MERCHANT_TYPE') == "OFFLINE") {
