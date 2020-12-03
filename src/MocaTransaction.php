@@ -67,7 +67,7 @@ class MocaTransaction
                 $codeVerifier = self::base64URLEncode(self::generateRandomString(64));
                 $codeChallenge = self::base64URLEncode(hash('sha256', $codeVerifier));
                 self::setCodeVerifier($codeChallenge);
-                return MocaTransaction::apiEndpoint().'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
+                return MocaRestClient::apiEndpoint() .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
                     '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.self::generateRandomString(16).
                     '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.self::generateRandomString(7);
             } else {
