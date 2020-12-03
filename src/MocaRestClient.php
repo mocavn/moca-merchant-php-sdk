@@ -18,7 +18,7 @@ class MocaRestClient {
 	}
 
 	private static function sha256($data) {
-		return base64_encode(hash('sha256', $data));
+		return base64_encode(hash('sha256', $data, true));
 	}
 
 	private static function generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $date) {
@@ -35,7 +35,7 @@ class MocaRestClient {
 		$content .= strlen($body) > 0 ? self::sha256($body) : '';
 		$content .= '\n';
 
-		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET')));
+		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
 	}
 
 	private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody) {
@@ -43,7 +43,7 @@ class MocaRestClient {
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
         $url = (self::apiEndpoint() . $apiUrl);
-        $now = self::now();
+        $now = 'Thu, 03 Dec 2020 04:12:41 GMT';//self::now();
         $credentials = array();
 
         if (getenv('MOCA_MERCHANT_TYPE') == "OFFLINE") {
