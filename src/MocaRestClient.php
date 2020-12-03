@@ -42,7 +42,7 @@ class MocaRestClient {
         $partnerID = getenv('MOCA_MERCHANT_PARTNER_ID');
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
-        $url = (self::apiEndpoint() . $apiUrl);
+        
         $now = self::now();
         $credentials = array();
 
@@ -65,7 +65,9 @@ class MocaRestClient {
             $requestBody = array_merge($requestBody, $credentials);
         }
 
-        $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
+        $url = (self::apiEndpoint() . $apiUrl);
+
+        $hmac = self::generateHmac($requestMethod, $url, $contentType, $requestBody, $now);
         $headers = array(
             'Accept' => 'application/json',
             'Content-Type' => $contentType,
@@ -73,11 +75,6 @@ class MocaRestClient {
             'Authorization' => ($partnerID . ':' . $hmac)
         );
         $response = null;
-
-        echo '<pre>';
-        var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
-        echo '</pre>';
-        die();
 
         $requestBody = \Unirest\Request\Body::json($requestBody);
 
