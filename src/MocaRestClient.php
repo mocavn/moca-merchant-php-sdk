@@ -67,7 +67,7 @@ class MocaRestClient {
             }
             $apiUrl .= urldecode(http_build_query($credentials));
         } else {
-            $requestBody = array_merge($requestBody, $credentials);
+            $requestBody = $requestBody;
         }
 
         $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
