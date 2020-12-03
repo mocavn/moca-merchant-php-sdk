@@ -35,6 +35,10 @@ class MocaRestClient {
 		$content .= strlen($body) > 0 ? self::sha256($body) : '';
 		$content .= '\n';
 
+        echo '<pre>';
+        var_dump(strlen($body) > 0 ? self::sha256($body) : '',self::sha256($body));
+        echo '</pre>';
+
 		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
 	}
 
