@@ -37,9 +37,6 @@ class MocaRestClient {
 		$content .= $hashedPayload;
 		$content .= "\n";
 
-
-        printf("String to sign = %s\n\n", $content);
-
 		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
 	}
 
@@ -79,10 +76,6 @@ class MocaRestClient {
         );
         $response = null;
 
-        echo '<pre>';
-        var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
-        echo '</pre>';
-        // die();
 
         $requestBody = \Unirest\Request\Body::json($requestBody);
 

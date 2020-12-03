@@ -64,7 +64,7 @@ class MocaTransaction
             if ($resp->code == 200) {
                 $bodyResp = $resp->body;
                 $scope = 'payment.vn.one_time_charge';
-                $codeVerifier = self::base64URLEncode(generateRandomString(64));
+                $codeVerifier = self::base64URLEncode(self::generateRandomString(64));
                 $codeChallenge = self::base64URLEncode(hash('sha256', $codeVerifier));
                 self::setCodeVerifier($codeChallenge);
                 return MocaTransaction::apiEndpoint().'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
