@@ -23,7 +23,7 @@ class MocaRestClient {
 
 	private static function generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $date) {
 		$body = json_encode($requestBody);
-        echo $body . PHP_EOL.PHP_EOL;
+        
         $hashedPayload = self::sha256($body);
 		$content = '';
 		$content .= $requestMethod;
@@ -92,11 +92,11 @@ class MocaRestClient {
                 break;
 
             case 'POST':
-                $response = \Unirest\Request::post($url, $headers, serialize($requestBody));
+                $response = \Unirest\Request::post($url, $headers, $requestBody);
                 break;
 
             case 'PUT':
-                $response = \Unirest\Request::put($url, $headers, serialize($requestBody));
+                $response = \Unirest\Request::put($url, $headers, $requestBody);
                 break;
         }
         return $response;
