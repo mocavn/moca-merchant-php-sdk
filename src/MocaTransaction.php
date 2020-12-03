@@ -56,7 +56,7 @@ class MocaTransaction
                 'merchantID'        => getenv('MOCA_MERCHANT_GRAB_ID'),
                 'description'       => self::getDescription(),
                 'isSync'            => false,
-                'metaInfo'          => array("brandName"=>self::getBrandName()),
+                'metaInfo'          => array('brandName'=>self::getBrandName()),
             );
 
             $resp = MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody);  

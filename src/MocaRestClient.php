@@ -74,10 +74,11 @@ class MocaRestClient {
         );
         $response = null;
 
-        echo '<pre>';
-        var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
-        echo '</pre>';
-        die();
+        // echo '<pre>';
+        // var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
+        // echo '</pre>';
+        // die();
+        $requestBody = Unirest\Request\Body::json($requestBody);
 
         switch ($requestMethod) {
             case 'GET':
