@@ -23,6 +23,7 @@ class MocaRestClient {
 
 	private static function generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $date) {
 		$body = json_encode($requestBody);
+        $hashedPayload = self::sha256($body);
 		$content = '';
 		$content .= $requestMethod;
 		$content .= "\n";
@@ -32,7 +33,7 @@ class MocaRestClient {
 		$content .= "\n";
 		$content .= $apiUrl;
 		$content .= "\n";
-		$content .= strlen($body) > 0 ? self::sha256($body) : '';
+		$content .= $hashedPayload;
 		$content .= "\n";
 
 
