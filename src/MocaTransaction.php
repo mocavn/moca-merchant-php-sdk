@@ -91,10 +91,9 @@ class MocaTransaction
             );
 
             $resp = MocaRestClient::post("/grabid/v1/oauth2/token", $requestBody);
-            $obj = json_decode($resp);
-
-            if ($obj->{'access_token'} != "") {
-                self::setCodeVerifier($obj->{'access_token'});
+            
+            if ($resp->code == 200) {
+                self::setCodeVerifier($resp->body->access_token);
             }
 
             return $resp;
@@ -111,9 +110,8 @@ class MocaTransaction
             );
 
             $resp =MocaRestClient::post("/mocapay/partner/v2/charge/complete", $requestBody);
-            $obj = json_decode($resp);
 
-            if ($obj->{'status'} == 'success') {
+            if ($resp->code == 200) {
                 self::setOriginTxID(self::getPartnerTxID());
             }
             return $resp;
