@@ -38,30 +38,6 @@ class MocaRestClient {
 		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
 	}
 
-    private static function getPath($url) {
-        return parse_url($url, PHP_URL_PATH);
-    }
-
-    private static function getQueryString($url) {
-        return parse_url($url, PHP_URL_QUERY);
-    }
-
-    private static function generateHMACSignature($partnerID, $partnerSecret, $httpMethod, $requestURL, $contentType, $requestBody, $timestamp) {
-        $requestPath = self::getPath($requestURL);
-        $queryString = self::getQueryString($requestURL);
-        if ($httpMethod == 'GET' || !$requestBody) {
-            $requestBody = '';
-        }
-        
-        $hashedPayload = base64_encode(hash('sha256', json_encode($requestBody), true));
-        $requestData = $httpMethod . "\n" . $contentType . "\n" . $timestamp . "\n" . $requestPath . "\n" .  $hashedPayload . "\n";
-        
-        $hmacDigest = base64_encode(hash_hmac('sha256', json_encode($requestData), $partnerSecret, true));
-        $authHeader = $partnerID . ':' . $hmacDigest;
-        
-        return $authHeader;
-    }
-
 	private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody) {
         $partnerID = getenv('MOCA_MERCHANT_PARTNER_ID');
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
@@ -70,41 +46,26 @@ class MocaRestClient {
         $now = self::now();
         $credentials = array();
 
-        // if (getenv('MOCA_MERCHANT_TYPE') == "POS") {
-        //     $terminalID = getenv('MOCA_MERCHANT_TERMINAL_ID');
-        //     $credentials = array(
-        //         'msgID' => $msgID,
-        //         'grabID' => $grabID,
-        //         'terminalID' => $terminalID
-        //     );
-        // }
-        // if ($requestMethod == "GET") {
-        //     if (strpos($apiUrl, '?') !== false) {
-        //         $apiUrl .= '&';
-        //     } else {
-        //         $apiUrl .= '?';
-        //     }
-        //     $apiUrl .= urldecode(http_build_query($credentials));
-        // } else {
-        //     $requestBody = array_merge($requestBody, $credentials);
-        // }
+        if (getenv('MOCA_MERCHANT_TYPE') == "OFFLINE") {
+            $terminalID = getenv('MOCA_MERCHANT_TERMINAL_ID');
+            $credentials = array(
+                'msgID' => $msgID,
+                'grabID' => $grabID,
+                'terminalID' => $terminalID
+            );
+        }
+        if ($requestMethod == "GET") {
+            if (strpos($apiUrl, '?') !== false) {
+                $apiUrl .= '&';
+            } else {
+                $apiUrl .= '?';
+            }
+            $apiUrl .= urldecode(http_build_query($credentials));
+        } else {
+            $requestBody = array_merge($requestBody, $credentials);
+        }
 
-        // $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
-        // $headers = array(
-        //     'Accept' => 'application/json',
-        //     'Content-Type' => $contentType,
-        //     'Date' => $now,
-        //     'Authorization' => ($partnerID . ':' . $hmac)
-        // );
-        // $response = null;
-
-        // echo '<pre>';
-        // var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
-        // echo '</pre>';
-        // die();
-
-        $hmac = self::generateHMACSignature($partnerID, getenv('MOCA_MERCHANT_PARTNER_SECRET'), $requestMethod, $apiUrl, $contentType, $requestBody, $now);
-
+        $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
         $headers = array(
             'Accept' => 'application/json',
             'Content-Type' => $contentType,
@@ -112,6 +73,11 @@ class MocaRestClient {
             'Authorization' => ($partnerID . ':' . $hmac)
         );
         $response = null;
+
+        echo '<pre>';
+        var_dump($requestMethod, $apiUrl, $contentType, $requestBody, $now, $hmac);
+        echo '</pre>';
+        die();
 
         $requestBody = \Unirest\Request\Body::json($requestBody);
 
