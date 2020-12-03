@@ -38,17 +38,17 @@ class MocaRestClient {
 		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
 	}
 
-    function getPath($url) {
+    private static function getPath($url) {
         return parse_url($url, PHP_URL_PATH);
     }
 
-    function getQueryString($url) {
+    private static function getQueryString($url) {
         return parse_url($url, PHP_URL_QUERY);
     }
 
-    function generateHMACSignature($partnerID, $partnerSecret, $httpMethod, $requestURL, $contentType, $requestBody, $timestamp) {
-        $requestPath = getPath($requestURL);
-        $queryString = getQueryString($requestURL);
+    private static function generateHMACSignature($partnerID, $partnerSecret, $httpMethod, $requestURL, $contentType, $requestBody, $timestamp) {
+        $requestPath = self::getPath($requestURL);
+        $queryString = self::getQueryString($requestURL);
         if ($httpMethod == 'GET' || !$requestBody) {
             $requestBody = '';
         }
@@ -103,7 +103,7 @@ class MocaRestClient {
         // echo '</pre>';
         // die();
 
-        $hmac = generateHMACSignature($partnerID, getenv('MOCA_MERCHANT_PARTNER_SECRET'), $requestMethod, $apiUrl, $contentType, $requestBody, $now);
+        $hmac = self::generateHMACSignature($partnerID, getenv('MOCA_MERCHANT_PARTNER_SECRET'), $requestMethod, $apiUrl, $contentType, $requestBody, $now);
 
         $headers = array(
             'Accept' => 'application/json',
