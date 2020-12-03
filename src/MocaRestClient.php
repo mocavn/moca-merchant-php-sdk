@@ -36,10 +36,9 @@ class MocaRestClient {
 		$content .= $hashedPayload;
 		$content .= "\n";
 
-        printf("String to sign = %s\n\n", $content);
 
         echo '<pre>';
-        var_dump(strlen($body) > 0 ? self::sha256($body) : '',$content);
+        var_dump($body,strlen($body) > 0 ? self::sha256($body) : '',$content);
         echo '</pre>';
 
 		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
@@ -50,7 +49,7 @@ class MocaRestClient {
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
         $url = (self::apiEndpoint() . $apiUrl);
-        $now = 'Thu, 03 Dec 2020 04:12:41 GMT';//self::now();
+        $now = 'Thu, 03 Dec 2020 05:25:26 GMT';//self::now();
         $credentials = array();
 
         if (getenv('MOCA_MERCHANT_TYPE') == "OFFLINE") {
