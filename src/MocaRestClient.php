@@ -5,42 +5,42 @@ namespace Moca\Merchant;
 class MocaRestClient {
 
     public static function apiEndpoint() {
-		if (getenv('MOCA_MERCHANT_ENVIRONMENT') == 'PRODUCTION') {
-			return 'https://partner-gw.moca.vn';
-		} else {
-			return 'https://stg-paysi.moca.vn';
-		}
-	}
+        if (getenv('MOCA_MERCHANT_ENVIRONMENT') == 'PRODUCTION') {
+            return 'https://partner-gw.moca.vn';
+        } else {
+            return 'https://stg-paysi.moca.vn';
+        }
+    }
 
-	private static function now() {
-		$now = new \DateTime('NOW');
-		return $now->format(\DateTime::RFC7231);
-	}
+    private static function now() {
+        $now = new \DateTime('NOW');
+        return $now->format(\DateTime::RFC7231);
+    }
 
-	private static function sha256($data) {
-		return base64_encode(hash('sha256', $data, true));
-	}
+    private static function sha256($data) {
+        return base64_encode(hash('sha256', $data, true));
+    }
 
-	private static function generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $date) {
-		$body = json_encode($requestBody);
-        
+    private static function generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $date) {
+        $body = json_encode($requestBody);
+
         $hashedPayload = self::sha256($body);
-		$content = '';
-		$content .= $requestMethod;
-		$content .= "\n";
-		$content .= $contentType;
-		$content .= "\n";
-		$content .= $date;
-		$content .= "\n";
-		$content .= $apiUrl;
-		$content .= "\n";
-		$content .= $hashedPayload;
-		$content .= "\n";
+        $content = '';
+        $content .= $requestMethod;
+        $content .= "\n";
+        $content .= $contentType;
+        $content .= "\n";
+        $content .= $date;
+        $content .= "\n";
+        $content .= $apiUrl;
+        $content .= "\n";
+        $content .= $hashedPayload;
+        $content .= "\n";
 
-		return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
-	}
+        return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
+    }
 
-	private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody) {
+    private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody) {
         $partnerID = getenv('MOCA_MERCHANT_PARTNER_ID');
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
@@ -64,7 +64,7 @@ class MocaRestClient {
             }
             $apiUrl .= urldecode(http_build_query($credentials));
         } else {
-            $requestBody = $requestBody;
+            $requestBody = array_merge($requestBody,$credentials);
         }
 
         $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
@@ -93,18 +93,18 @@ class MocaRestClient {
                 break;
         }
         return $response;
-	}
+    }
 
-	public static function get($apiUrl, $contentType) {
-		return self::sendRequest('GET', $apiUrl, $contentType, null);
-	}
+    public static function get($apiUrl, $contentType) {
+        return self::sendRequest('GET', $apiUrl, $contentType, null);
+    }
 
-	public static function post($apiUrl, $requestBody) {
-		return self::sendRequest('POST', $apiUrl, 'application/json', $requestBody);
-	}
+    public static function post($apiUrl, $requestBody) {
+        return self::sendRequest('POST', $apiUrl, 'application/json', $requestBody);
+    }
 
-	public static function put($apiUrl, $requestBody) {
-		return self::sendRequest('PUT', $apiUrl, 'application/json', $requestBody);
-	}
+    public static function put($apiUrl, $requestBody) {
+        return self::sendRequest('PUT', $apiUrl, 'application/json', $requestBody);
+    }
 
 }

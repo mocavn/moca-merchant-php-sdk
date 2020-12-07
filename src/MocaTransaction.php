@@ -23,6 +23,8 @@ class MocaTransaction
     private $partnerGroupTxID;
     private $code;
     private $originTxID;
+    private $refundPartnerTxID;
+    private $state;
 
     // 1. getRequest use for app to app
     public function getRequest() {
@@ -59,7 +61,7 @@ class MocaTransaction
                 'metaInfo'          => array('brandName'=>self::getBrandName()),
             );
 
-            $resp = MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody);  
+            $resp = MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody);
 
             if ($resp->code == 200) {
                 $bodyResp = $resp->body;
@@ -91,7 +93,7 @@ class MocaTransaction
             );
 
             $resp = MocaRestClient::post("/grabid/v1/oauth2/token", $requestBody);
-            
+
             if ($resp->code == 200) {
                 self::setCodeVerifier($resp->body->access_token);
             }
@@ -132,7 +134,7 @@ class MocaTransaction
     }
 
     // 5. RefundTxn to refund transaction
-    public function RefundTxn() {
+    public function refundTxnOnA() {
         try {
             $requestBody = array(
                 'partnerTxID'       => self::getPartnerTxID(),
@@ -143,8 +145,12 @@ class MocaTransaction
                 'description'       => self::getDescription(),
                 'originTxID'        => self::getOriginTxID(),
             );
+            $resp =MocaRestClient::post("/mocapay/partner/v2/refund", $requestBody);
+            if ($resp->code == 200) {
+                self::setRefundPartnerTxID(self::getPartnerTxID());
+            }
 
-            return MocaRestClient::post("/mocapay/partner/v2/refund", $requestBody);
+            return $resp;
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -153,13 +159,82 @@ class MocaTransaction
     // 6. getRefundStatus to check status end of transaction
     public function getRefundStatus() {
         try {
-            $uri = 'mocapay/partner/v2/refund/'.self::getPartnerTxID().'/status?currency='.self::getCurrency();
+            $uri = 'mocapay/partner/v2/refund/'.self::getRefundPartnerTxID().'/status?currency='.self::getCurrency();
 
             return MocaRestClient::get($uri,'application/json');
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
     }
+
+    // All api below for POS ingration
+    // 1. createQrCode to Create QR code for POS
+    public function createQrCode() {
+        try {
+            $requestBody = array(
+                'amount' => $this->getAmount(),
+                'currency' => $this->getCurrency(),
+                'partnerTxID' => $this->getPartnerTxID()
+            );
+            $resp = MocaRestClient::post("/mocapay/partners/v1/terminal/qrcode/create", $requestBody);
+
+            if ($resp->code == 200) {
+                $this->setOriginTxID($resp->body->TxID);
+                $this->setOrigPartnerTxID($this->getPartnerTxID());
+            }
+
+            return $resp;
+        } catch (Exception $e) {
+            return 'Caught exception: ' . $e->getMessage() . "\n";
+        }
+    }
+
+    // 2. cancelTxn if user QR do not scan or expire
+    public function cancelTxn() {
+        try {
+            $requestBody = array(
+                'currency' => $this->getCurrency(),
+                'origTxID' => $this->getOriginTxID(),
+                'partnerTxID' => $this->getPartnerTxID()
+            );
+
+            return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->getOriginTxID()/cancel", $requestBody);
+        } catch (Exception $e) {
+            return 'Caught exception: ' . $e->getMessage() . "\n";
+        }
+    }
+
+    // 3. refundPosTxn to refund transaction already success.
+    public function refundPosTxn() {
+        try {
+            $requestBody = array(
+                'currency' => $this->getCurrency(),
+                'origTxID' => $this->getOriginTxID(),
+                'partnerTxID' => $this->getPartnerTxID()
+            );
+
+            return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->origPartnerTxID/refund", $requestBody);
+        } catch (Exception $e) {
+            return 'Caught exception: ' . $e->getMessage() . "\n";
+        }
+    }
+
+    // 4. performTxn use if method is CPQR
+    public function performTxn() {
+        try {
+            $requestBody = array(
+                'amount' => $this->getAmount(),
+                'currency' => $this->getCurrency(),
+                'partnerTxID' => $this->getPartnerTxID(),
+                'code' => $this->getCode(),
+            );
+
+            return MocaRestClient::post("/mocapay/partners/v1/terminal/transaction/perform", $requestBody);
+        } catch (Exception $e) {
+            return 'Caught exception: ' . $e->getMessage() . "\n";
+        }
+    }
+
 
     private function generateRandomString($length) {
         $text = '';
@@ -172,6 +247,38 @@ class MocaTransaction
 
     private function base64URLEncode($str) {
         return str_replace(['=', '+', '/'], ['', '-', '_'], ($str));
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getState()
+    {
+        return $this->state;
+    }
+
+    /**
+     * @param mixed $state
+     */
+    public function setState($state)
+    {
+        $this->state = $state;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRefundPartnerTxID()
+    {
+        return $this->refundPartnerTxID;
+    }
+
+    /**
+     * @param mixed $refundPartnerTxID
+     */
+    public function setRefundPartnerTxID($refundPartnerTxID)
+    {
+        $this->refundPartnerTxID = $refundPartnerTxID;
     }
 
     /**
@@ -229,8 +336,8 @@ class MocaTransaction
     {
         return $this->codeVerifier;
     }/**
-     * @param mixed $codeVerifier
-     */
+ * @param mixed $codeVerifier
+ */
     public function setCodeVerifier($codeVerifier)
     {
         $this->codeVerifier = $codeVerifier;
