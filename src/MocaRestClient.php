@@ -40,7 +40,7 @@ class MocaRestClient {
         return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
     }
 
-    private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody) {
+    private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody, $type) {
         $partnerID = getenv('MOCA_MERCHANT_PARTNER_ID');
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
@@ -48,7 +48,7 @@ class MocaRestClient {
         $now = self::now();
         $credentials = array();
 
-        if (getenv('MOCA_MERCHANT_TYPE') == "OFFLINE") {
+        if ($type == "OFFLINE") {
             $terminalID = getenv('MOCA_MERCHANT_TERMINAL_ID');
             $credentials = array(
                 'msgID' => $msgID,
@@ -68,14 +68,24 @@ class MocaRestClient {
         }
 
         $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
-        $headers = array(
-            'Accept' => 'application/json',
-            'Content-Type' => $contentType,
-            'Date' => $now,
-            'Authorization' => ($partnerID . ':' . $hmac)
-        );
-        $response = null;
+        if (array_key_exists('access_token',$requestBody)) {
+            $headers = array(
+                'Accept' => 'application/json',
+                'Content-Type' => $contentType,
+                'Date' => $now,
+                'Authorization' => 'Bearer ' . $requestBody->access_token
+            );
+            unset($requestBody['access_token']);
+        } else {
+            $headers = array(
+                'Accept' => 'application/json',
+                'Content-Type' => $contentType,
+                'Date' => $now,
+                'Authorization' => ($partnerID . ':' . $hmac)
+            );
+        }
 
+        $response = null;
 
         $requestBody = \Unirest\Request\Body::json($requestBody);
 
@@ -95,16 +105,16 @@ class MocaRestClient {
         return $response;
     }
 
-    public static function get($apiUrl, $contentType) {
-        return self::sendRequest('GET', $apiUrl, $contentType, null);
+    public static function get($apiUrl, $contentType, $type) {
+        return self::sendRequest('GET', $apiUrl, $contentType, null, $type);
     }
 
-    public static function post($apiUrl, $requestBody) {
-        return self::sendRequest('POST', $apiUrl, 'application/json', $requestBody);
+    public static function post($apiUrl, $requestBody, $type) {
+        return self::sendRequest('POST', $apiUrl, 'application/json', $requestBody, $type);
     }
 
-    public static function put($apiUrl, $requestBody) {
-        return self::sendRequest('PUT', $apiUrl, 'application/json', $requestBody);
+    public static function put($apiUrl, $requestBody, $type) {
+        return self::sendRequest('PUT', $apiUrl, 'application/json', $requestBody, $type);
     }
 
 }
