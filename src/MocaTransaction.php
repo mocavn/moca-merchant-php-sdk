@@ -63,7 +63,7 @@ class MocaTransaction
 
                 return MocaRestClient::apiEndpoint() .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
                     '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.$this->generateRandomString(16).
-                    '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$this->generateRandomString(7);
+                    '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$this->getState();
             } else {
                 return $resp;
             }
@@ -133,7 +133,7 @@ class MocaTransaction
             if ($resp->code == 200) {
                 $requestBody = array(
                     'partnerTxID'       => $this->getPartnerTxID(),
-                    'partnerGroupTxID'  => $this->getPartnerGroupTxID(),
+                    'partnerGroupTxID'  => $this->getPartnerTxID(),
                     'amount'            => $this->getAmount(),
                     'currency'          => $this->getCurrency(),
                     'merchantID'        => getenv('MOCA_MERCHANT_MERCHANT_ID'),
@@ -154,7 +154,7 @@ class MocaTransaction
         try {
             $resp = $this->oAuthToken($this->base64URLEncode(hash('sha256', $this->getPartnerTxID())),$this->getCode());
             if ($resp->code == 200) {
-                $uri = 'mocapay/partner/v2/refund/'.$this->getRefundPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
+                $uri = 'mocapay/partner/v2/refund/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
 
                 return MocaRestClient::get($uri,'application/json', "ONLINE",$resp->body->access_token);
             } else {
