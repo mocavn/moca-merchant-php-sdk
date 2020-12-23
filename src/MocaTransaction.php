@@ -17,6 +17,7 @@ class MocaTransaction
     private $code;
     private $originTxID;
     private $refundPartnerTxID;
+    private $access_token;
     private $state;
 
     // 1. getRequest use for app to app
@@ -73,15 +74,15 @@ class MocaTransaction
     }
 
     // 2. oAuthToken to get token to complete, check charge status and refund transaction
-    private function oAuthToken($codeVerifier, $code) {
+    private function oAuthToken() {
         try {
             $requestBody = array(
                 'grant_type'    => "authorization_code",
                 'client_id'     => getenv('MOCA_MERCHANT_CLIENT_ID'),
                 'client_secret' => getenv('MOCA_MERCHANT_CLIENT_SECRET'),
-                'code_verifier' => $codeVerifier,
+                'code_verifier' => $this->base64URLEncode(hash('sha256', $this->getPartnerTxID())),
                 'redirect_uri'  => getenv('MOCA_MERCHANT_REDIRECT_URI'),
-                'code'          => $code,
+                'code'          => $this->getCode(),
             );
 
             $resp = MocaRestClient::post("/grabid/v1/oauth2/token", $requestBody, "ONLINE");
@@ -95,16 +96,11 @@ class MocaTransaction
     // 3. chargeComplete to finished transaction
     public function chargeComplete() {
         try {
-            $resp = $this->oAuthToken($this->base64URLEncode(hash('sha256', $this->getPartnerTxID())),$this->getCode());
-            if ($resp->code == 200) {
-                $requestBodyChargeComplete = array(
-                    'partnerTxID'       => $this->getPartnerTxID(),
-                );
+            $requestBodyChargeComplete = array(
+                'partnerTxID'       => $this->getPartnerTxID(),
+            );
 
-                return MocaRestClient::post("/mocapay/partner/v2/charge/complete", $requestBodyChargeComplete, "ONLINE",$resp->body->access_token);
-            } else {
-                return $resp;
-            }
+            return MocaRestClient::post("/mocapay/partner/v2/charge/complete", $requestBodyChargeComplete, "ONLINE",$this->getAccessToken());
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -113,14 +109,9 @@ class MocaTransaction
     // 4. getChargeStatus to check status end of transaction
     public function getChargeStatus() {
         try {
-            $resp = $this->oAuthToken($this->base64URLEncode(hash('sha256', $this->getPartnerTxID())),$this->getCode());
-            if ($resp->code == 200) {
-                $uri = 'mocapay/partner/v2/charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
+            $uri = 'mocapay/partner/v2/charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
 
-                return MocaRestClient::get($uri,'application/json', "ONLINE",$resp->body->access_token);
-            } else {
-                return $resp;
-            }
+            return MocaRestClient::get($uri,'application/json', "ONLINE",$this->getAccessToken());
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -129,21 +120,16 @@ class MocaTransaction
     // 5. RefundTxn to refund transaction
     public function refundTxnOnA() {
         try {
-            $resp = $this->oAuthToken($this->base64URLEncode(hash('sha256', $this->getPartnerTxID())),$this->getCode());
-            if ($resp->code == 200) {
-                $requestBody = array(
-                    'partnerTxID'       => $this->getPartnerTxID(),
-                    'partnerGroupTxID'  => $this->getPartnerTxID(),
-                    'amount'            => $this->getAmount(),
-                    'currency'          => $this->getCurrency(),
-                    'merchantID'        => getenv('MOCA_MERCHANT_MERCHANT_ID'),
-                    'description'       => $this->getDescription(),
-                    'originTxID'        => $this->getOriginTxID(),
-                );
-                return MocaRestClient::post("/mocapay/partner/v2/refund", $requestBody, "ONLINE",$resp->body->access_token);
-            } else {
-                return $resp;
-            }
+            $requestBody = array(
+                'partnerTxID'       => $this->getPartnerTxID(),
+                'partnerGroupTxID'  => $this->getPartnerTxID(),
+                'amount'            => $this->getAmount(),
+                'currency'          => $this->getCurrency(),
+                'merchantID'        => getenv('MOCA_MERCHANT_MERCHANT_ID'),
+                'description'       => $this->getDescription(),
+                'originTxID'        => $this->getOriginTxID(),
+            );
+            return MocaRestClient::post("/mocapay/partner/v2/refund", $requestBody, "ONLINE",$this->getAccessToken());
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -152,14 +138,9 @@ class MocaTransaction
     // 6. getRefundStatus to check status end of transaction
     public function getRefundStatus() {
         try {
-            $resp = $this->oAuthToken($this->base64URLEncode(hash('sha256', $this->getPartnerTxID())),$this->getCode());
-            if ($resp->code == 200) {
-                $uri = 'mocapay/partner/v2/refund/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
+            $uri = 'mocapay/partner/v2/refund/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
 
-                return MocaRestClient::get($uri,'application/json', "ONLINE",$resp->body->access_token);
-            } else {
-                return $resp;
-            }
+            return MocaRestClient::get($uri,'application/json', "ONLINE",$this->getAccessToken());
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -251,6 +232,22 @@ class MocaTransaction
     /**
      * @return mixed
      */
+    public function getAccessToken()
+    {
+        return $this->access_token;
+    }
+
+    /**
+     * @param mixed $access_token
+     */
+    public function setAccessToken($access_token)
+    {
+        $this->access_token = $access_token;
+    }
+
+    /**
+     * @return mixed
+     */
     public function getState()
     {
         return $this->state;
@@ -262,7 +259,6 @@ class MocaTransaction
     public function setState($state)
     {
         $this->state = $state;
-        return $this;
     }
 
     /**

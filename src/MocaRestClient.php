@@ -21,6 +21,10 @@ class MocaRestClient {
         return base64_encode(hash('sha256', $data, true));
     }
 
+    private static function base64URLEncode($str) {
+        return str_replace(['=', '+', '/'], ['', '-', '_'], ($str));
+    }
+
     private static function generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $date) {
         $body = json_encode($requestBody);
 
@@ -38,6 +42,22 @@ class MocaRestClient {
         $content .= "\n";
 
         return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
+    }
+
+    private static function generatePOPSig($accessToken) {
+        $timestampUnix = Math.floor(Date.now()/1000);
+        $message = $timestampUnix . $accessToken;
+        $utf8 = $message;
+        $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
+        $sub = selt::base64URLEncode($signature);
+        #echo $sub . PHP_EOL;
+
+        $payload = [
+            "time_since_epoch" => $timestampUnix,
+            "sig" => $sub
+        ];
+        $payloadBytes = json_encode($payload);
+        return selt::base64URLEncode(base64_encode($payloadBytes));
     }
 
     private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody, $type, $access_token) {
@@ -68,7 +88,15 @@ class MocaRestClient {
         }
 
         $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
-        if ($type == "ONLINE" && $apiUrl !='/mocapay/partner/v2/charge/init') {
+        if($apiUrl == '/mocapay/partner/v2/charge/complete') {
+            $headers = array(
+                'Accept' => 'application/json',
+                'Content-Type' => $contentType,
+                'Date' => $now,
+                'X-GID-AUX-POP' => self::generatePOPSig($access_token),
+                'Authorization' => 'Bearer ' . $access_token
+            );
+        } else if ($type == "ONLINE" && $apiUrl !='/mocapay/partner/v2/charge/init') {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
