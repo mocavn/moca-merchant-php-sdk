@@ -243,6 +243,7 @@ class MocaTransaction
     public function setAccessToken($access_token)
     {
         $this->access_token = $access_token;
+        return $this;
     }
 
     /**
@@ -259,6 +260,7 @@ class MocaTransaction
     public function setState($state)
     {
         $this->state = $state;
+        return $this;
     }
 
     /**
@@ -462,5 +464,6 @@ class MocaTransaction
     public function setOrigPartnerTxID($origPartnerTxID)
     {
         $this->origPartnerTxID = $origPartnerTxID;
+        return $this;
     }
 }
