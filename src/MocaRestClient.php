@@ -45,8 +45,7 @@ class MocaRestClient {
     }
 
     private static function generatePOPSig($accessToken) {
-        $now = new \DateTime('NOW');
-        $timestampUnix = log10($now/1000);
+        $timestampUnix = time();
         $message = $timestampUnix . $accessToken;
         $utf8 = $message;
         $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
