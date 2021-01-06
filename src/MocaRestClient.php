@@ -44,8 +44,8 @@ class MocaRestClient {
         return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
     }
 
-    private static function generatePOPSig($accessToken) {
-        $timestampUnix = time();
+    private static function generatePOPSig($accessToken, $now) {
+        $timestampUnix = strtotime($now);
         $message = $timestampUnix . $accessToken;
         $utf8 = $message;
         $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
@@ -93,7 +93,7 @@ class MocaRestClient {
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
                 'Date' => $now,
-                'X-GID-AUX-POP' => self::generatePOPSig($access_token),
+                'X-GID-AUX-POP' => self::generatePOPSig($access_token,$now),
                 'Authorization' => 'Bearer ' . $access_token
             );
         } else if($apiUrl == '/grabid/v1/oauth2/token') {
