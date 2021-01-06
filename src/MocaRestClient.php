@@ -48,7 +48,7 @@ class MocaRestClient {
         $timestampUnix = $now->getTimestamp();
         $message = $timestampUnix . $accessToken;
         $utf8 = $message;
-        $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
+        $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_CLIENT_SECRET'), true));
         $sub = self::base64URLEncode($signature);
         #echo $sub . PHP_EOL;
 
