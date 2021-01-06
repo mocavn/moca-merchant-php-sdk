@@ -60,7 +60,7 @@ class MocaTransaction
             if ($resp->code == 200) {
                 $bodyResp = $resp->body;
                 $scope = 'payment.vn.one_time_charge';
-                $codeChallenge = $this->base64URLEncode(hash('sha256', $this->base64URLEncode($this->getPartnerTxID())));
+                $codeChallenge = $this->base64URLEncode(hash('sha256', $this->getPartnerTxID()));
 
                 return MocaRestClient::apiEndpoint() .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
                     '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.$this->generateRandomString(16).
@@ -80,7 +80,7 @@ class MocaTransaction
                 'grant_type'    => "authorization_code",
                 'client_id'     => getenv('MOCA_MERCHANT_CLIENT_ID'),
                 'client_secret' => getenv('MOCA_MERCHANT_CLIENT_SECRET'),
-                'code_verifier' => $this->base64URLEncode($this->getPartnerTxID()),
+                'code_verifier' => $this->getPartnerTxID(),
                 'redirect_uri'  => getenv('MOCA_MERCHANT_REDIRECT_URI'),
                 'code'          => $this->getCode(),
             );
