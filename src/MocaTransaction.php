@@ -74,7 +74,7 @@ class MocaTransaction
     }
 
     // 2. oAuthToken to get token to complete, check charge status and refund transaction
-    private function oAuthToken() {
+    public function oAuthToken() {
         try {
             $requestBody = array(
                 'grant_type'    => "authorization_code",
