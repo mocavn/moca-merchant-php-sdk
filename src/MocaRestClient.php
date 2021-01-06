@@ -49,7 +49,7 @@ class MocaRestClient {
         $message = $timestampUnix . $accessToken;
         $utf8 = $message;
         $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
-        $sub = selt::base64URLEncode($signature);
+        $sub = self::base64URLEncode($signature);
         #echo $sub . PHP_EOL;
 
         $payload = [
@@ -57,7 +57,7 @@ class MocaRestClient {
             "sig" => $sub
         ];
         $payloadBytes = json_encode($payload);
-        return selt::base64URLEncode(base64_encode($payloadBytes));
+        return self::base64URLEncode(base64_encode($payloadBytes));
     }
 
     private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody, $type, $access_token) {
