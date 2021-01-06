@@ -96,7 +96,12 @@ class MocaRestClient {
                 'X-GID-AUX-POP' => self::generatePOPSig($access_token),
                 'Authorization' => 'Bearer ' . $access_token
             );
-        } else if ($type == "ONLINE" && $apiUrl !='/mocapay/partner/v2/charge/init') {
+        } else if($apiUrl == '/grabid/v1/oauth2/token') {
+            $headers = array(
+                'Accept' => 'application/json',
+                'Content-Type' => $contentType,
+            );
+        } else if($apiUrl !='/mocapay/partner/v2/charge/init') {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,

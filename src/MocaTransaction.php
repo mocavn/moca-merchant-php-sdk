@@ -19,6 +19,7 @@ class MocaTransaction
     private $refundPartnerTxID;
     private $access_token;
     private $state;
+    private $codeVerifier;
 
     // 1. getRequest use for app to app
     public function getRequest() {
@@ -60,7 +61,7 @@ class MocaTransaction
             if ($resp->code == 200) {
                 $bodyResp = $resp->body;
                 $scope = 'payment.vn.one_time_charge';
-                $codeChallenge = $this->base64URLEncode(hash('sha256', $this->base64URLEncode($this->getPartnerTxID().$this->getPartnerTxID())),true);
+                $codeChallenge = $this->base64URLEncode(hash('sha256', $this->base64URLEncode($this->getPartnerTxID().$this->getPartnerTxID()),true));
 
                 return MocaRestClient::apiEndpoint() .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
                     '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.$this->generateRandomString(16).
