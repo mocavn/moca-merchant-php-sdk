@@ -28,7 +28,7 @@ class MocaRestClient {
     private static function generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $date) {
         $body = json_encode($requestBody);
 
-        $hashedPayload = self::sha256($body);
+        $hashedPayload = sha256($body);
         $content = '';
         $content .= $requestMethod;
         $content .= "\n";
@@ -44,12 +44,12 @@ class MocaRestClient {
         return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
     }
 
-    private static function generatePOPSig($accessToken) {
-        $timestampUnix = Math.floor(Date.now()/1000);
+    private static function generatePOPSig($accessToken, $now) {
+        $timestampUnix = $now->getTimestamp();
         $message = $timestampUnix . $accessToken;
         $utf8 = $message;
-        $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
-        $sub = selt::base64URLEncode($signature);
+        $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_CLIENT_SECRET'), true));
+        $sub = base64URLEncode($signature);
         #echo $sub . PHP_EOL;
 
         $payload = [
@@ -57,15 +57,17 @@ class MocaRestClient {
             "sig" => $sub
         ];
         $payloadBytes = json_encode($payload);
-        return selt::base64URLEncode(base64_encode($payloadBytes));
+        return base64URLEncode(base64_encode($payloadBytes));
     }
 
     private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody, $type, $access_token) {
         $partnerID = getenv('MOCA_MERCHANT_PARTNER_ID');
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
-        $url = (self::apiEndpoint() . $apiUrl);
-        $now = self::now();
+        $url = (apiEndpoint() . $apiUrl);
+        $timestamp = new \DateTime('NOW');
+        $now = $timestamp->format(\DateTime::RFC7231);
+        //$now = self::now();
         $credentials = array();
 
         if ($type == "OFFLINE") {
@@ -87,16 +89,21 @@ class MocaRestClient {
             $requestBody = array_merge($requestBody,$credentials);
         }
 
-        $hmac = self::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
+        $hmac = generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
         if($apiUrl == '/mocapay/partner/v2/charge/complete') {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
                 'Date' => $now,
-                'X-GID-AUX-POP' => self::generatePOPSig($access_token),
+                'X-GID-AUX-POP' => generatePOPSig($access_token,$timestamp),
                 'Authorization' => 'Bearer ' . $access_token
             );
-        } else if ($type == "ONLINE" && $apiUrl !='/mocapay/partner/v2/charge/init') {
+        } else if($apiUrl == '/grabid/v1/oauth2/token') {
+            $headers = array(
+                'Accept' => 'application/json',
+                'Content-Type' => $contentType,
+            );
+        } else if($apiUrl !='/mocapay/partner/v2/charge/init') {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
