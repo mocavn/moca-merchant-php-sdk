@@ -44,12 +44,12 @@ class MocaRestClient {
         return base64_encode(hash_hmac('sha256', $content, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
     }
 
-    private static function generatePOPSig($accessToken, $now) {
-        $timestampUnix = $now->getTimestamp();
+    private static function generatePOPSig($accessToken) {
+        $timestampUnix = Math.floor(Date.now()/1000);
         $message = $timestampUnix . $accessToken;
         $utf8 = $message;
-        $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_CLIENT_SECRET'), true));
-        $sub = self::base64URLEncode($signature);
+        $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_PARTNER_SECRET'), true));
+        $sub = selt::base64URLEncode($signature);
         #echo $sub . PHP_EOL;
 
         $payload = [
@@ -57,7 +57,7 @@ class MocaRestClient {
             "sig" => $sub
         ];
         $payloadBytes = json_encode($payload);
-        return self::base64URLEncode(base64_encode($payloadBytes));
+        return selt::base64URLEncode(base64_encode($payloadBytes));
     }
 
     private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody, $type, $access_token) {
@@ -65,9 +65,7 @@ class MocaRestClient {
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
         $url = (self::apiEndpoint() . $apiUrl);
-        $timestamp = new \DateTime('NOW');
-        $now = $timestamp->format(\DateTime::RFC7231);
-        //$now = self::now();
+        $now = self::now();
         $credentials = array();
 
         if ($type == "OFFLINE") {
@@ -95,15 +93,10 @@ class MocaRestClient {
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
                 'Date' => $now,
-                'X-GID-AUX-POP' => self::generatePOPSig($access_token,$timestamp),
+                'X-GID-AUX-POP' => self::generatePOPSig($access_token),
                 'Authorization' => 'Bearer ' . $access_token
             );
-        } else if($apiUrl == '/grabid/v1/oauth2/token') {
-            $headers = array(
-                'Accept' => 'application/json',
-                'Content-Type' => $contentType,
-            );
-        } else if($apiUrl !='/mocapay/partner/v2/charge/init') {
+        } else if ($type == "ONLINE" && $apiUrl !='/mocapay/partner/v2/charge/init') {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
