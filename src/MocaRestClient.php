@@ -49,7 +49,7 @@ class MocaRestClient {
         $message = $timestampUnix . $accessToken;
         $utf8 = $message;
         $signature = base64_encode(hash_hmac('sha256', $utf8, getenv('MOCA_MERCHANT_CLIENT_SECRET'), true));
-        $sub = base64URLEncode($signature);
+        $sub = MocaRestClient::base64URLEncode($signature);
         #echo $sub . PHP_EOL;
 
         $payload = [
@@ -57,7 +57,7 @@ class MocaRestClient {
             "sig" => $sub
         ];
         $payloadBytes = json_encode($payload);
-        return base64URLEncode(base64_encode($payloadBytes));
+        return MocaRestClient::base64URLEncode(base64_encode($payloadBytes));
     }
 
     private static function sendRequest($requestMethod, $apiUrl, $contentType, $requestBody, $type, $access_token) {
@@ -88,13 +88,13 @@ class MocaRestClient {
             $requestBody = array_merge($requestBody,$credentials);
         }
 
-        $hmac = generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
+        $hmac = MocaRestClient::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
         if($apiUrl == '/mocapay/partner/v2/charge/complete') {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
                 'Date' => $now,
-                'X-GID-AUX-POP' => generatePOPSig($access_token,$timestamp),
+                'X-GID-AUX-POP' => MocaRestClient::generatePOPSig($access_token,$timestamp),
                 'Authorization' => 'Bearer ' . $access_token
             );
         } else if($apiUrl == '/grabid/v1/oauth2/token') {
