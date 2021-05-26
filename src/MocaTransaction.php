@@ -146,6 +146,17 @@ class MocaTransaction
         }
     }
 
+    // 7. getOtcStatus to get OAuthCode
+    public function getOtcStatus() {
+        try {
+            $uri = 'mocapay/partner/v2/one-time-charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
+
+            return MocaRestClient::get($uri,'application/json', "ONLINE",$this->getAccessToken());
+        } catch (Exception $e) {
+            return 'Caught exception: ' . $e->getMessage() . "\n";
+        }
+    }
+
     // All api below for POS integration
     // 1. createQrCode to Create QR code for POS
     public function createQrCode() {
