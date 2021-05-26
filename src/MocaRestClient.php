@@ -64,7 +64,7 @@ class MocaRestClient {
         $partnerID = getenv('MOCA_MERCHANT_PARTNER_ID');
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
-        $url = ($this->apiEndpoint() . $apiUrl);
+        $url = (MocaRestClient::apiEndpoint() . $apiUrl);
         $timestamp = new \DateTime('NOW');
         $now = $timestamp->format(\DateTime::RFC7231);
         $credentials = array();
