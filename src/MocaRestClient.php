@@ -111,7 +111,7 @@ class MocaRestClient {
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
             );
-        } else if(type == "ONLINE" && $apiUrl !='/mocapay/partner/v2/charge/init' && $apiUrl !='/grabpay/partner/v2/charge/init') {
+        } else if($type == "ONLINE" && $apiUrl !='/mocapay/partner/v2/charge/init' && $apiUrl !='/grabpay/partner/v2/charge/init') {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
