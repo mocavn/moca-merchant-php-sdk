@@ -6,9 +6,17 @@ class MocaRestClient {
 
     public static function apiEndpoint() {
         if (getenv('MOCA_MERCHANT_ENVIRONMENT') == 'PRODUCTION') {
-            return 'https://partner-gw.moca.vn';
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return 'https://partner-gw.moca.vn';
+            } else {
+                return 'https://partner-api.grab.com';
+            }
         } else {
-            return 'https://stg-paysi.moca.vn';
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return 'https://stg-paysi.moca.vn';
+            } else {
+                return 'https://partner-api.stg-myteksi.com';
+            }
         }
     }
 
@@ -64,7 +72,6 @@ class MocaRestClient {
         $partnerID = getenv('MOCA_MERCHANT_PARTNER_ID');
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
-        $url = (MocaRestClient::apiEndpoint() . $apiUrl);
         $timestamp = new \DateTime('NOW');
         $now = $timestamp->format(\DateTime::RFC7231);
         $credentials = array();
@@ -88,8 +95,10 @@ class MocaRestClient {
             $requestBody = array_merge($requestBody,$credentials);
         }
 
+        $url = (MocaRestClient::apiEndpoint() . $apiUrl);
+
         $hmac = MocaRestClient::generateHmac($requestMethod, $apiUrl, $contentType, $requestBody, $now);
-        if($apiUrl == '/mocapay/partner/v2/charge/complete') {
+        if($apiUrl == '/mocapay/partner/v2/charge/complete' || $apiUrl == '/grabpay/partner/v2/charge/complete') {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
@@ -102,7 +111,7 @@ class MocaRestClient {
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
             );
-        } else if($apiUrl !='/mocapay/partner/v2/charge/init') {
+        } else if(type == "ONLINE" && $apiUrl !='/mocapay/partner/v2/charge/init' && $apiUrl !='/grabpay/partner/v2/charge/init') {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,

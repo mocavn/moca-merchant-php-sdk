@@ -33,8 +33,11 @@ class MocaTransaction
                 'isSync'            => false,
                 'metaInfo'          => array("brandName"=>$this->getBrandName() != ''? $this->getBrandName() : '' ),
             );
-
-            return MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody, "ONLINE");
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody, "ONLINE");
+            } else {
+                return MocaRestClient::post("/grabpay/partner/v2/charge/init", $requestBody, "ONLINE");
+            }
 
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
@@ -54,8 +57,12 @@ class MocaTransaction
                 'isSync'            => false,
                 'metaInfo'          => array('brandName'=>$this->getBrandName()),
             );
-
-            $resp = MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody, "ONLINE");
+            $resp = null;
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                $resp = MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody, "ONLINE");
+            } else {
+                $resp = MocaRestClient::post("/grabpay/partner/v2/charge/init", $requestBody, "ONLINE");
+            }
 
             if ($resp->code == 200) {
                 $bodyResp = $resp->body;
@@ -84,10 +91,7 @@ class MocaTransaction
                 'redirect_uri'  => getenv('MOCA_MERCHANT_REDIRECT_URI'),
                 'code'          => $this->getCode(),
             );
-
-            $resp = MocaRestClient::post("/grabid/v1/oauth2/token", $requestBody, "ONLINE");
-
-            return $resp;
+            return MocaRestClient::post("/grabid/v1/oauth2/token", $requestBody, "ONLINE");
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -99,8 +103,11 @@ class MocaTransaction
             $requestBodyChargeComplete = array(
                 'partnerTxID'       => $this->getPartnerTxID(),
             );
-
-            return MocaRestClient::post("/mocapay/partner/v2/charge/complete", $requestBodyChargeComplete, "ONLINE",$this->getAccessToken());
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return MocaRestClient::post("/mocapay/partner/v2/charge/complete", $requestBodyChargeComplete, "ONLINE",$this->getAccessToken());
+            } else {
+                return MocaRestClient::post("/grabpay/partner/v2/charge/complete", $requestBodyChargeComplete, "ONLINE",$this->getAccessToken());
+            }
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -109,9 +116,11 @@ class MocaTransaction
     // 4. getChargeStatus to check status end of transaction
     public function getChargeStatus() {
         try {
-            $uri = 'mocapay/partner/v2/charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
-
-            return MocaRestClient::get($uri,'application/json', "ONLINE",$this->getAccessToken());
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return MocaRestClient::get('mocapay/partner/v2/charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
+            } else {
+                return MocaRestClient::get('grabpay/partner/v2/charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
+            }
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -129,7 +138,11 @@ class MocaTransaction
                 'description'       => $this->getDescription(),
                 'originTxID'        => $this->getOriginTxID(),
             );
-            return MocaRestClient::post("/mocapay/partner/v2/refund", $requestBody, "ONLINE",$this->getAccessToken());
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return MocaRestClient::post("/mocapay/partner/v2/refund", $requestBody, "ONLINE",$this->getAccessToken());
+            } else {
+                return MocaRestClient::post("/grabpay/partner/v2/refund", $requestBody, "ONLINE",$this->getAccessToken());
+            }
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -138,9 +151,11 @@ class MocaTransaction
     // 6. getRefundStatus to check status end of transaction
     public function getRefundStatus() {
         try {
-            $uri = 'mocapay/partner/v2/refund/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
-
-            return MocaRestClient::get($uri,'application/json', "ONLINE",$this->getAccessToken());
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return MocaRestClient::get('mocapay/partner/v2/refund/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
+            } else {
+                return MocaRestClient::get('grabpay/partner/v2/refund/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
+            }
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -149,9 +164,11 @@ class MocaTransaction
     // 7. getOtcStatus to get OAuthCode
     public function getOtcStatus() {
         try {
-            $uri = 'mocapay/partner/v2/one-time-charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND';
-
-            return MocaRestClient::get($uri,'application/json', "ONLINE",$this->getAccessToken());
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return MocaRestClient::get('mocapay/partner/v2/one-time-charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
+            } else {
+                return MocaRestClient::get('grabpay/partner/v2/one-time-charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
+            }
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -166,7 +183,12 @@ class MocaTransaction
                 'currency' => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
                 'partnerTxID' => $this->getPartnerTxID()
             );
-            $resp = MocaRestClient::post("/mocapay/partners/v1/terminal/qrcode/create", $requestBody, "OFFLINE");
+            $resp = null;
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                $resp = MocaRestClient::post("/mocapay/partners/v1/terminal/qrcode/create", $requestBody, "OFFLINE");
+            } else {
+                $resp = MocaRestClient::post("/grabpay/partners/v1/terminal/qrcode/create", $requestBody, "OFFLINE");
+            }
 
             if ($resp->code == 200) {
                 $this->setOriginTxID($resp->body->TxID);
@@ -187,8 +209,11 @@ class MocaTransaction
                 'origTxID' => $this->getOriginTxID(),
                 'partnerTxID' => $this->getPartnerTxID()
             );
-
-            return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->getOriginTxID()/cancel", $requestBody, "OFFLINE");
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->getOriginTxID()/cancel", $requestBody, "OFFLINE");
+            } else {
+                return MocaRestClient::put("/grabpay/partners/v1/terminal/transaction/$this->getOriginTxID()/cancel", $requestBody, "OFFLINE");
+            }
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -204,8 +229,11 @@ class MocaTransaction
                 'reason'    => $this->getDescription(),
                 'partnerTxID' => $this->getPartnerTxID()
             );
-
-            return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->origPartnerTxID/refund", $requestBody, "OFFLINE");
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->origPartnerTxID/refund", $requestBody, "OFFLINE");
+            } else {
+                return MocaRestClient::put("/grabpay/partners/v1/terminal/transaction/$this->origPartnerTxID/refund", $requestBody, "OFFLINE");
+            }
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -220,8 +248,11 @@ class MocaTransaction
                 'partnerTxID' => $this->getPartnerTxID(),
                 'code' => $this->getCode(),
             );
-
-            return MocaRestClient::post("/mocapay/partners/v1/terminal/transaction/perform", $requestBody, "OFFLINE");
+            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
+                return MocaRestClient::post("/mocapay/partners/v1/terminal/transaction/perform", $requestBody, "OFFLINE");
+            } else {
+                return MocaRestClient::post("/grabpay/partners/v1/terminal/transaction/perform", $requestBody, "OFFLINE");
+            }
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
