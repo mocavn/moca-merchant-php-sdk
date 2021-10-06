@@ -73,7 +73,6 @@ class MocaRestClient {
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
         $timestamp = new \DateTime('NOW');
-        $timestamp->modify('-7 hour');
         $now = $timestamp->format(\DateTime::RFC7231);
         $credentials = array();
 
@@ -131,6 +130,8 @@ class MocaRestClient {
         $response = null;
 
         $requestBody = \Unirest\Request\Body::json($requestBody);
+        var_dump("Header: "+ $headers);
+        var_dump("Body: "+ $requestBody);
 
         switch ($requestMethod) {
             case 'GET':
