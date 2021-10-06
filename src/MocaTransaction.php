@@ -69,9 +69,14 @@ class MocaTransaction
                 $scope = 'payment.vn.one_time_charge';
                 $codeChallenge = $this->base64URLEncode(base64_encode(hash('sha256', $this->base64URLEncode($this->getPartnerTxID().$this->getPartnerTxID()), true)));
 
-                return MocaRestClient::apiEndpoint() .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
-                    '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.$this->generateRandomString(16).
-                    '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$this->getState();
+                return json_encode(
+                    array(
+                        'code' => $resp->code,
+                        'webUrl' => MocaRestClient::apiEndpoint() .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
+                        '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.$this->generateRandomString(16).
+                        '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$this->getState(),
+                    )
+                );
             } else {
                 return $resp;
             }

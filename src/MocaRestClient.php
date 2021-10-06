@@ -73,6 +73,7 @@ class MocaRestClient {
         $grabID = getenv('MOCA_MERCHANT_GRAB_ID');
         $msgID = md5(uniqid(rand(), true));
         $timestamp = new \DateTime('NOW');
+        $timestamp->modify('-7 hour');
         $now = $timestamp->format(\DateTime::RFC7231);
         $credentials = array();
 
