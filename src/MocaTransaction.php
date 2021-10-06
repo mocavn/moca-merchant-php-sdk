@@ -44,6 +44,7 @@ class MocaTransaction
         $this->redirectUrl = $redirectUrl;
     }
 
+    
     public function getpartnerInfo() {
         $partnerInfo = array(
             'partnerID'         => $this->getPartnerID(),
@@ -117,7 +118,14 @@ class MocaTransaction
         return $partnerInfo;
     } 
 
-    // 1. getRequest use for app to app
+    /** 1. getRequest use for app to app
+     * @param $partnerTxID
+     * @param $amount
+     * @param $currency
+     * @param $description
+     * @param mixed $brandName
+     * @param mixed $isSync
+     */
     public function getRequest() {
         try {
             $env = $this->getpartnerInfo();
@@ -139,7 +147,14 @@ class MocaTransaction
         }
     }
 
-    // 1. createDeeplinkUrl use for web to app
+    /** 1. createDeeplinkUrl use for web to app
+     * @param $partnerTxID
+     * @param $amount
+     * @param $currency
+     * @param $description
+     * @param mixed $brandName
+     * @param mixed $isSync
+     */
     public function createDeeplinkUrl() {
         try {
             $env = $this->getpartnerInfo();
@@ -175,15 +190,16 @@ class MocaTransaction
     // 2. oAuthToken to get token to complete, check charge status and refund transaction
     public function oAuthToken() {
         try {
+            $env = $this->getpartnerInfo();
             $requestBody = array(
                 'grant_type'    => "authorization_code",
-                'client_id'     => getenv('MOCA_MERCHANT_CLIENT_ID'),
-                'client_secret' => getenv('MOCA_MERCHANT_CLIENT_SECRET'),
+                'client_id'     => $env['clientID'],
+                'client_secret' => $env['clientSecret'],
                 'code_verifier' => $this->base64URLEncode($this->getPartnerTxID().$this->getPartnerTxID()),
-                'redirect_uri'  => getenv('MOCA_MERCHANT_REDIRECT_URI'),
+                'redirect_uri'  => $this->getRedirectUrl(),
                 'code'          => $this->getCode(),
             );
-            return MocaRestClient::post("/grabid/v1/oauth2/token", $requestBody, "ONLINE");
+            return MocaRestClient::post($env, $env['OAuth2Token'], $requestBody, "ONLINE");
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -192,15 +208,12 @@ class MocaTransaction
     // 3. chargeComplete to finished transaction
     public function chargeComplete() {
         try {
+            $env = $this->getpartnerInfo();
             $requestBodyChargeComplete = array(
                 'partnerTxID'       => $this->getPartnerTxID(),
             );
-            // This to get the which path can runing on their country
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                return MocaRestClient::post("/mocapay/partner/v2/charge/complete", $requestBodyChargeComplete, "ONLINE",$this->getAccessToken());
-            } else {
-                return MocaRestClient::post("/grabpay/partner/v2/charge/complete", $requestBodyChargeComplete, "ONLINE",$this->getAccessToken());
-            }
+            
+            return MocaRestClient::post($env, $env['chargeComplete'], $requestBodyChargeComplete, "ONLINE",$this->getAccessToken());
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -209,12 +222,11 @@ class MocaTransaction
     // 4. getChargeStatus to check status end of transaction
     public function getChargeStatus() {
         try {
-            // This to get the which path can runing on their country
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                return MocaRestClient::get('mocapay/partner/v2/charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
-            } else {
-                return MocaRestClient::get('grabpay/partner/v2/charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
-            }
+            $env = $this->getpartnerInfo();
+            $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['onaChargeStatus']);
+            $url = str_replace("money",$this->getCurrency(),$url);
+
+            return MocaRestClient::get($env, $url, "ONLINE",$this->getAccessToken());
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -223,6 +235,7 @@ class MocaTransaction
     // 5. RefundTxn to refund transaction
     public function refundTxnOnA() {
         try {
+            $env = $this->getpartnerInfo();
             $requestBody = array(
                 'partnerTxID'       => $this->getPartnerTxID(),
                 'partnerGroupTxID'  => $this->getPartnerTxID(),
@@ -232,12 +245,8 @@ class MocaTransaction
                 'description'       => $this->getDescription(),
                 'originTxID'        => $this->getOriginTxID(),
             );
-            // This to get the which path can runing on their country
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                return MocaRestClient::post("/mocapay/partner/v2/refund", $requestBody, "ONLINE",$this->getAccessToken());
-            } else {
-                return MocaRestClient::post("/grabpay/partner/v2/refund", $requestBody, "ONLINE",$this->getAccessToken());
-            }
+            
+            return MocaRestClient::post($env, $env['onaRefundTxn'], $requestBody, "ONLINE",$this->getAccessToken());
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -246,12 +255,11 @@ class MocaTransaction
     // 6. getRefundStatus to check status end of transaction
     public function getRefundStatus() {
         try {
-            // This to get the which path can runing on their country
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                return MocaRestClient::get('mocapay/partner/v2/refund/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
-            } else {
-                return MocaRestClient::get('grabpay/partner/v2/refund/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
-            }
+            $env = $this->getpartnerInfo();
+            $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['onaCheckRefundTxn']);
+            $url = str_replace("money",$this->getCurrency(),$url);
+
+            return MocaRestClient::get($env, $url,'application/json', "ONLINE",$this->getAccessToken());
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -260,12 +268,11 @@ class MocaTransaction
     // 7. getOtcStatus to get OAuthCode
     public function getOtcStatus() {
         try {
-            // This to get the which path can runing on their country
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                return MocaRestClient::get('mocapay/partner/v2/one-time-charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
-            } else {
-                return MocaRestClient::get('grabpay/partner/v2/one-time-charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
-            }
+            $env = $this->getpartnerInfo();
+            $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['oneTimeChargeStatus']);
+            $url = str_replace("money",$this->getCurrency(),$url);
+            
+            return MocaRestClient::get($env, $url,'application/json', "ONLINE",$this->getAccessToken());
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -275,18 +282,14 @@ class MocaTransaction
     // 1. createQrCode to Create QR code for POS
     public function createQrCode() {
         try {
+            $env = $this->getpartnerInfo();
             $requestBody = array(
                 'amount' => $this->getAmount(),
                 'currency' => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
                 'partnerTxID' => $this->getPartnerTxID()
             );
-            $resp = null;
-            // This to get the which path can runing on their country
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                $resp = MocaRestClient::post("/mocapay/partners/v1/terminal/qrcode/create", $requestBody, "OFFLINE");
-            } else {
-                $resp = MocaRestClient::post("/grabpay/partners/v1/terminal/qrcode/create", $requestBody, "OFFLINE");
-            }
+            
+            $resp = MocaRestClient::post($env, $env['createQrCode'], $requestBody, "OFFLINE");
 
             if ($resp->code == 200) {
                 $this->setOriginTxID($resp->body->TxID);
@@ -302,17 +305,14 @@ class MocaTransaction
     // 2. cancelTxn if user QR do not scan or expire
     public function cancelTxn() {
         try {
+            $env = $this->getpartnerInfo();
             $requestBody = array(
                 'currency' => $this->getCurrency(),
                 'origTxID' => $this->getOriginTxID(),
                 'partnerTxID' => $this->getPartnerTxID()
             );
-            // This to get the which path can runing on their country
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->getOriginTxID()/cancel", $requestBody, "OFFLINE");
-            } else {
-                return MocaRestClient::put("/grabpay/partners/v1/terminal/transaction/$this->getOriginTxID()/cancel", $requestBody, "OFFLINE");
-            }
+            
+            return MocaRestClient::put($env, str_replace("OriginTxID",$this->getOriginTxID(),$env['cancelQrTxn']), $requestBody, "OFFLINE");
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -321,6 +321,7 @@ class MocaTransaction
     // 3. refundPosTxn to refund transaction already success.
     public function refundPosTxn() {
         try {
+            $env = $this->getpartnerInfo();
             $requestBody = array(
                 'currency' => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
                 'origTxID' => $this->getOriginTxID(),
@@ -328,12 +329,8 @@ class MocaTransaction
                 'reason'    => $this->getDescription(),
                 'partnerTxID' => $this->getPartnerTxID()
             );
-            // This to get the which path can runing on their country
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->origPartnerTxID/refund", $requestBody, "OFFLINE");
-            } else {
-                return MocaRestClient::put("/grabpay/partners/v1/terminal/transaction/$this->origPartnerTxID/refund", $requestBody, "OFFLINE");
-            }
+            
+            return MocaRestClient::put($env, str_replace("OriginTxID",$this->getOriginTxID(),$env['posRefundTxn']), $requestBody, "OFFLINE");
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -342,18 +339,28 @@ class MocaTransaction
     // 4. performTxn use if method is CPQR
     public function performTxn() {
         try {
+            $env = $this->getpartnerInfo();
             $requestBody = array(
                 'amount' => $this->getAmount(),
                 'currency' => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
                 'partnerTxID' => $this->getPartnerTxID(),
                 'code' => $this->getCode(),
             );
-            // This to get the which path can runing on their country
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                return MocaRestClient::post("/mocapay/partners/v1/terminal/transaction/perform", $requestBody, "OFFLINE");
-            } else {
-                return MocaRestClient::post("/grabpay/partners/v1/terminal/transaction/perform", $requestBody, "OFFLINE");
-            }
+            
+            return MocaRestClient::post($env, $env['performTxn'], $requestBody, "OFFLINE");
+        } catch (Exception $e) {
+            return 'Caught exception: ' . $e->getMessage() . "\n";
+        }
+    }
+
+    // 5.  use if method is CPQR
+    public function posChargeStatus() {
+        try {
+            $env = $this->getpartnerInfo();
+            $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['posChargeStatus']);
+            $url = str_replace("money",$this->getCurrency(),$url);
+            
+            return MocaRestClient::post($env, $url, $requestBody, "OFFLINE");
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
