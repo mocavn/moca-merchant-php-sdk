@@ -31,7 +31,7 @@ class MocaTransaction
     private $redirectUrl;
     private $endpoint;
 
-    public function __construct(string $environment ='STAGING', string $locate = 'VN', string $partnerID ='', string $partnerSecret ='', string $merchantID ='', string $terminalID = '', string $clientID ='', string $clientSecret ='', string $redirectUrl ='')
+    public function __construct(string $environment, string $locate, string $partnerID, string $partnerSecret, string $merchantID, string $terminalID, string $clientID, string $clientSecret, string $redirectUrl)
     {
         $this->environment = $environment;
         $this->locate = $locate;
@@ -46,59 +46,72 @@ class MocaTransaction
 
     public function getpartnerInfo() {
         $partnerInfo = array(
-            'partnerID'     => $this->getPartnerID(),
-            'partnerSecret' => $this->getPartnerSecret(),
-            'merchantID'    => $this->getMerchantID(),
-            'terminalID'    => $this->getTerminalID(),
-            'clientID'      => $this->getClientID(),
-            'clientSecret'  => $this->getClientSecret(),
+            'partnerID'         => $this->getPartnerID(),
+            'partnerSecret'     => $this->getPartnerSecret(),
+            'merchantID'        => $this->getMerchantID(),
+            'terminalID'        => $this->getTerminalID(),
+            'clientID'          => $this->getClientID(),
+            'clientSecret'      => $this->getClientSecret(),
+            'url'               => '',
+            'chargeInit'        => '',
+            'OAuth2Token'       => '',
+            'chargeComplete'    => '',
+            'onaChargeStatus'   => '',
+            'onaRefundTxn'      => '',
+            'onaCheckRefundTxn' => '',
+            'oneTimeChargeStatus' => '',
+            'createQrCode'      => '',
+            'cancelQrTxn'       => '',
+            'posRefundTxn'      => '',
+            'performTxn'        => '',
+            'posChargeStatus'   => '',
         );
 
         if ($this->getEnvironment() == 'PRODUCTION') {
             # This to get the which domain can runing on their country
             if ($this->getLocate() == 'VN') {
-                array_push($partnerInfo,['url'=>'https://partner-gw.moca.vn']);
+                $partnerInfo['url'] = 'https://partner-gw.moca.vn';
             } else {
-                array_push($partnerInfo,['url'=>'https://partner-api.grab.com']);
+                $partnerInfo['url'] = 'https://partner-api.grab.com';
             }
         } else {
             # This to get the which domain can runing on their country
             if ($this->getLocate() == 'VN') {
-                array_push($partnerInfo,['url'=>'https://stg-paysi.moca.vn']);
+                $partnerInfo['url'] = 'https://stg-paysi.moca.vn';
             } else {
-                array_push($partnerInfo,['url'=>'https://partner-api.stg-myteksi.com']);
+                $partnerInfo['url'] = 'https://partner-api.stg-myteksi.com';
             }
         }
 
         if ($this->getLocate() == 'VN') {
-            array_push($partnerInfo,['chargeInit'=>"/mocapay/partner/v2/charge/init"]);
-            array_push($partnerInfo,['OAuth2Token'=>"/grabid/v1/oauth2/token"]);
-            array_push($partnerInfo,['chargeComplete'=>"/mocapay/partner/v2/charge/complete"]);
-            array_push($partnerInfo,['onaChargeStatus'=>"/mocapay/partner/v2/charge/PartnerTxID/status?currency=money"]);
-            array_push($partnerInfo,['onaRefundTxn'=>"/mocapay/partner/v2/refund"]);
-            array_push($partnerInfo,['onaCheckRefundTxn'=>"/mocapay/partner/v2/refund/PartnerTxID/status?currency=money"]);
-            array_push($partnerInfo,['oneTimeChargeStatus'=>"/mocapay/partner/v2/one-time-charge/PartnerTxID/status?currency=money"]);
+            $partnerInfo['chargeInit'] = "/mocapay/partner/v2/charge/init";
+            $partnerInfo['OAuth2Token'] = "/grabid/v1/oauth2/token";
+            $partnerInfo['chargeComplete'] = "/mocapay/partner/v2/charge/complete";
+            $partnerInfo['onaChargeStatus'] = "/mocapay/partner/v2/charge/PartnerTxID/status?currency=money";
+            $partnerInfo['onaRefundTxn'] = "/mocapay/partner/v2/refund";
+            $partnerInfo['onaCheckRefundTxn'] = "/mocapay/partner/v2/refund/PartnerTxID/status?currency=money";
+            $partnerInfo['oneTimeChargeStatus'] = "/mocapay/partner/v2/one-time-charge/PartnerTxID/status?currency=money";
             # offline path
-            array_push($partnerInfo,['createQrCode'=>"/mocapay/partners/v1/terminal/qrcode/create"]);
-            array_push($partnerInfo,['cancelQrTxn'=>"/mocapay/partners/v1/terminal/transaction/OriginTxID/cancel"]);
-            array_push($partnerInfo,['posRefundTxn'=>"/mocapay/partners/v1/terminal/transaction/OriginTxID/refund"]);
-            array_push($partnerInfo,['performTxn'=>"/mocapay/partners/v1/terminal/transaction/perform"]);
-            array_push($partnerInfo,['posChargeStatus'=>"/mocapay/partners/v1/terminal/transaction/PartnerTxID?currency=money&txType=P2M"]);
+            $partnerInfo['createQrCode'] = "/mocapay/partners/v1/terminal/qrcode/create";
+            $partnerInfo['cancelQrTxn'] = "/mocapay/partners/v1/terminal/transaction/OriginTxID/cancel";
+            $partnerInfo['posRefundTxn'] = "/mocapay/partners/v1/terminal/transaction/OriginTxID/refund";
+            $partnerInfo['performTxn'] = "/mocapay/partners/v1/terminal/transaction/perform";
+            $partnerInfo['posChargeStatus'] = "/mocapay/partners/v1/terminal/transaction/PartnerTxID?currency=money&txType=P2M";
         } else {
             # online path
-            array_push($partnerInfo,['chargeInit'=>"/grabpay/partner/v2/charge/init"]);
-            array_push($partnerInfo,['OAuth2Token'=>"/grabid/v1/oauth2/token"]);
-            array_push($partnerInfo,['chargeComplete'=>"/grabpay/partner/v2/charge/complete"]);
-            array_push($partnerInfo,['onaChargeStatus'=>"/grabpay/partner/v2/charge/PartnerTxID/status?currency=money"]);
-            array_push($partnerInfo,['onaRefundTxn'=>"/grabpay/partner/v2/refund"]);
-            array_push($partnerInfo,['onaCheckRefundTxn'=>"/grabpay/partner/v2/refund/PartnerTxID/status?currency=money"]);
-            array_push($partnerInfo,['oneTimeChargeStatus'=>"/grabpay/partner/v2/one-time-charge/PartnerTxID/status?currency=money"]);
+            $partnerInfo['chargeInit'] = "/grabpay/partner/v2/charge/init";
+            $partnerInfo['OAuth2Token'] = "/grabid/v1/oauth2/token";
+            $partnerInfo['chargeComplete'] = "/grabpay/partner/v2/charge/complete";
+            $partnerInfo['onaChargeStatus'] = "/grabpay/partner/v2/charge/PartnerTxID/status?currency=money";
+            $partnerInfo['onaRefundTxn'] = "/grabpay/partner/v2/refund";
+            $partnerInfo['onaCheckRefundTxn'] = "/grabpay/partner/v2/refund/PartnerTxID/status?currency=money";
+            $partnerInfo['oneTimeChargeStatus'] = "/grabpay/partner/v2/one-time-charge/PartnerTxID/status?currency=money";
             # offline path
-            array_push($partnerInfo,['createQrCode'=>"/grabpay/partners/v1/terminal/qrcode/create"]);
-            array_push($partnerInfo,['cancelQrTxn'=>"/grabpay/partners/v1/terminal/transaction/OriginTxID/cancel"]);
-            array_push($partnerInfo,['posRefundTxn'=>"/grabpay/partners/v1/terminal/transaction/OriginTxID/refund"]);
-            array_push($partnerInfo,['performTxn'=>"/grabpay/partners/v1/terminal/transaction/perform"]);
-            array_push($partnerInfo,['posChargeStatus'=>"/grabpay/partners/v1/terminal/transaction/PartnerTxID?currency=money&txType=P2M"]);
+            $partnerInfo['createQrCode'] = "/grabpay/partners/v1/terminal/qrcode/create";
+            $partnerInfo['cancelQrTxn'] = "/grabpay/partners/v1/terminal/transaction/OriginTxID/cancel";
+            $partnerInfo['posRefundTxn'] = "/grabpay/partners/v1/terminal/transaction/OriginTxID/refund";
+            $partnerInfo['performTxn'] = "/grabpay/partners/v1/terminal/transaction/perform";
+            $partnerInfo['posChargeStatus'] = "/grabpay/partners/v1/terminal/transaction/PartnerTxID?currency=money&txType=P2M";
         }
 
         return $partnerInfo;
