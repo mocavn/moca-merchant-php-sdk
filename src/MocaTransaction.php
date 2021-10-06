@@ -20,24 +20,106 @@ class MocaTransaction
     private $access_token;
     private $state;
 
+    private $environment;
+    private $locate;
+    private $partnerID;
+    private $partnerSecret;
+    private $merchantID;
+    private $terminalID;
+    private $clientID;
+    private $clientSecret;
+    private $redirectUrl;
+    private $endpoint;
+
+    public function __construct(string $environment ='STAGING', string $locate = 'VN', string $partnerID ='', string $partnerSecret ='', string $merchantID ='', string $terminalID = '', string $clientID ='', string $clientSecret ='', string $redirectUrl ='')
+    {
+        $this->environment = $environment;
+        $this->locate = $locate;
+        $this->partnerID = $partnerID;
+        $this->partnerSecret = $partnerSecret;
+        $this->merchantID = $merchantID;
+        $this->terminalID = $terminalID;
+        $this->clientID = $clientID;
+        $this->clientSecret = $clientSecret;
+        $this->redirectUrl = $redirectUrl;
+    }
+
+    public function getpartnerInfo() {
+        $partnerInfo = array(
+            'partnerID'     => $this->getPartnerID(),
+            'partnerSecret' => $this->getPartnerSecret(),
+            'merchantID'    => $this->getMerchantID(),
+            'terminalID'    => $this->getTerminalID(),
+            'clientID'      => $this->getClientID(),
+            'clientSecret'  => $this->getClientSecret(),
+        );
+
+        if ($this->getEnvironment() == 'PRODUCTION') {
+            # This to get the which domain can runing on their country
+            if ($this->getLocate() == 'VN') {
+                array_push($partnerInfo,['url'=>'https://partner-gw.moca.vn']);
+            } else {
+                array_push($partnerInfo,['url'=>'https://partner-api.grab.com']);
+            }
+        } else {
+            # This to get the which domain can runing on their country
+            if ($this->getLocate() == 'VN') {
+                array_push($partnerInfo,['url'=>'https://stg-paysi.moca.vn']);
+            } else {
+                array_push($partnerInfo,['url'=>'https://partner-api.stg-myteksi.com']);
+            }
+        }
+
+        if ($this->getLocate() == 'VN') {
+            array_push($partnerInfo,['chargeInit'=>"/mocapay/partner/v2/charge/init"]);
+            array_push($partnerInfo,['OAuth2Token'=>"/grabid/v1/oauth2/token"]);
+            array_push($partnerInfo,['chargeComplete'=>"/mocapay/partner/v2/charge/complete"]);
+            array_push($partnerInfo,['onaChargeStatus'=>"/mocapay/partner/v2/charge/PartnerTxID/status?currency=money"]);
+            array_push($partnerInfo,['onaRefundTxn'=>"/mocapay/partner/v2/refund"]);
+            array_push($partnerInfo,['onaCheckRefundTxn'=>"/mocapay/partner/v2/refund/PartnerTxID/status?currency=money"]);
+            array_push($partnerInfo,['oneTimeChargeStatus'=>"/mocapay/partner/v2/one-time-charge/PartnerTxID/status?currency=money"]);
+            # offline path
+            array_push($partnerInfo,['createQrCode'=>"/mocapay/partners/v1/terminal/qrcode/create"]);
+            array_push($partnerInfo,['cancelQrTxn'=>"/mocapay/partners/v1/terminal/transaction/OriginTxID/cancel"]);
+            array_push($partnerInfo,['posRefundTxn'=>"/mocapay/partners/v1/terminal/transaction/OriginTxID/refund"]);
+            array_push($partnerInfo,['performTxn'=>"/mocapay/partners/v1/terminal/transaction/perform"]);
+            array_push($partnerInfo,['posChargeStatus'=>"/mocapay/partners/v1/terminal/transaction/PartnerTxID?currency=money&txType=P2M"]);
+        } else {
+            # online path
+            array_push($partnerInfo,['chargeInit'=>"/grabpay/partner/v2/charge/init"]);
+            array_push($partnerInfo,['OAuth2Token'=>"/grabid/v1/oauth2/token"]);
+            array_push($partnerInfo,['chargeComplete'=>"/grabpay/partner/v2/charge/complete"]);
+            array_push($partnerInfo,['onaChargeStatus'=>"/grabpay/partner/v2/charge/PartnerTxID/status?currency=money"]);
+            array_push($partnerInfo,['onaRefundTxn'=>"/grabpay/partner/v2/refund"]);
+            array_push($partnerInfo,['onaCheckRefundTxn'=>"/grabpay/partner/v2/refund/PartnerTxID/status?currency=money"]);
+            array_push($partnerInfo,['oneTimeChargeStatus'=>"/grabpay/partner/v2/one-time-charge/PartnerTxID/status?currency=money"]);
+            # offline path
+            array_push($partnerInfo,['createQrCode'=>"/grabpay/partners/v1/terminal/qrcode/create"]);
+            array_push($partnerInfo,['cancelQrTxn'=>"/grabpay/partners/v1/terminal/transaction/OriginTxID/cancel"]);
+            array_push($partnerInfo,['posRefundTxn'=>"/grabpay/partners/v1/terminal/transaction/OriginTxID/refund"]);
+            array_push($partnerInfo,['performTxn'=>"/grabpay/partners/v1/terminal/transaction/perform"]);
+            array_push($partnerInfo,['posChargeStatus'=>"/grabpay/partners/v1/terminal/transaction/PartnerTxID?currency=money&txType=P2M"]);
+        }
+
+        return $partnerInfo;
+    } 
+
     // 1. getRequest use for app to app
     public function getRequest() {
         try {
+            $env = $this->getpartnerInfo();
             $requestBody = array(
                 'partnerTxID'       => $this->getPartnerTxID(),
                 'partnerGroupTxID'  => $this->getPartnerTxID(),
                 'amount'            => $this->getAmount(),
                 'currency'          => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
-                'merchantID'        => getenv('MOCA_MERCHANT_GRAB_ID'),
+                'merchantID'        => $env['merchantID'],
                 'description'       => $this->getDescription(),
                 'isSync'            => false,
                 'metaInfo'          => array("brandName"=>$this->getBrandName() != ''? $this->getBrandName() : '' ),
             );
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                return MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody, "ONLINE");
-            } else {
-                return MocaRestClient::post("/grabpay/partner/v2/charge/init", $requestBody, "ONLINE");
-            }
+            // This to get the which path can runing on their country
+            return MocaRestClient::post($env, $env['chargeInit'], $requestBody, "ONLINE");
 
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
@@ -47,36 +129,28 @@ class MocaTransaction
     // 1. createDeeplinkUrl use for web to app
     public function createDeeplinkUrl() {
         try {
+            $env = $this->getpartnerInfo();
             $requestBody = array(
                 'partnerTxID'       => $this->getPartnerTxID(),
                 'partnerGroupTxID'  => $this->getPartnerTxID(),
                 'amount'            => $this->getAmount(),
                 'currency'          => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
-                'merchantID'        => getenv('MOCA_MERCHANT_GRAB_ID'),
+                'merchantID'        => $env['merchantID'],
                 'description'       => $this->getDescription(),
                 'isSync'            => false,
                 'metaInfo'          => array('brandName'=>$this->getBrandName()),
             );
-            $resp = null;
-            if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
-                $resp = MocaRestClient::post("/mocapay/partner/v2/charge/init", $requestBody, "ONLINE");
-            } else {
-                $resp = MocaRestClient::post("/grabpay/partner/v2/charge/init", $requestBody, "ONLINE");
-            }
-
+            
+            $resp = MocaRestClient::post($env, $env['chargeInit'], $requestBody, "ONLINE");
+            // generation web url
             if ($resp->code == 200) {
                 $bodyResp = $resp->body;
                 $scope = 'payment.vn.one_time_charge';
                 $codeChallenge = $this->base64URLEncode(base64_encode(hash('sha256', $this->base64URLEncode($this->getPartnerTxID().$this->getPartnerTxID()), true)));
-
-                return json_encode(
-                    array(
-                        'code' => $resp->code,
-                        'webUrl' => MocaRestClient::apiEndpoint() .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
+                $resp->body = $env['url'] .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
                         '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.$this->generateRandomString(16).
-                        '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$this->getState(),
-                    )
-                );
+                        '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$this->getState();
+                return $resp;
             } else {
                 return $resp;
             }
@@ -108,6 +182,7 @@ class MocaTransaction
             $requestBodyChargeComplete = array(
                 'partnerTxID'       => $this->getPartnerTxID(),
             );
+            // This to get the which path can runing on their country
             if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
                 return MocaRestClient::post("/mocapay/partner/v2/charge/complete", $requestBodyChargeComplete, "ONLINE",$this->getAccessToken());
             } else {
@@ -121,6 +196,7 @@ class MocaTransaction
     // 4. getChargeStatus to check status end of transaction
     public function getChargeStatus() {
         try {
+            // This to get the which path can runing on their country
             if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
                 return MocaRestClient::get('mocapay/partner/v2/charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
             } else {
@@ -143,6 +219,7 @@ class MocaTransaction
                 'description'       => $this->getDescription(),
                 'originTxID'        => $this->getOriginTxID(),
             );
+            // This to get the which path can runing on their country
             if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
                 return MocaRestClient::post("/mocapay/partner/v2/refund", $requestBody, "ONLINE",$this->getAccessToken());
             } else {
@@ -156,6 +233,7 @@ class MocaTransaction
     // 6. getRefundStatus to check status end of transaction
     public function getRefundStatus() {
         try {
+            // This to get the which path can runing on their country
             if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
                 return MocaRestClient::get('mocapay/partner/v2/refund/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
             } else {
@@ -169,6 +247,7 @@ class MocaTransaction
     // 7. getOtcStatus to get OAuthCode
     public function getOtcStatus() {
         try {
+            // This to get the which path can runing on their country
             if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
                 return MocaRestClient::get('mocapay/partner/v2/one-time-charge/'.$this->getPartnerTxID().'/status?currency='.$this->getCurrency() != ''? $this->getCurrency(): 'VND','application/json', "ONLINE",$this->getAccessToken());
             } else {
@@ -189,6 +268,7 @@ class MocaTransaction
                 'partnerTxID' => $this->getPartnerTxID()
             );
             $resp = null;
+            // This to get the which path can runing on their country
             if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
                 $resp = MocaRestClient::post("/mocapay/partners/v1/terminal/qrcode/create", $requestBody, "OFFLINE");
             } else {
@@ -214,6 +294,7 @@ class MocaTransaction
                 'origTxID' => $this->getOriginTxID(),
                 'partnerTxID' => $this->getPartnerTxID()
             );
+            // This to get the which path can runing on their country
             if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
                 return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->getOriginTxID()/cancel", $requestBody, "OFFLINE");
             } else {
@@ -234,6 +315,7 @@ class MocaTransaction
                 'reason'    => $this->getDescription(),
                 'partnerTxID' => $this->getPartnerTxID()
             );
+            // This to get the which path can runing on their country
             if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
                 return MocaRestClient::put("/mocapay/partners/v1/terminal/transaction/$this->origPartnerTxID/refund", $requestBody, "OFFLINE");
             } else {
@@ -253,6 +335,7 @@ class MocaTransaction
                 'partnerTxID' => $this->getPartnerTxID(),
                 'code' => $this->getCode(),
             );
+            // This to get the which path can runing on their country
             if (getenv('MOCA_MERCHANT_COUNTRY') == 'VN') {
                 return MocaRestClient::post("/mocapay/partners/v1/terminal/transaction/perform", $requestBody, "OFFLINE");
             } else {
@@ -513,5 +596,77 @@ class MocaTransaction
     {
         $this->origPartnerTxID = $origPartnerTxID;
         return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getEnvironment()
+    {
+        return $this->environment;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getLocate()
+    {
+        return $this->locate;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPartnerID()
+    {
+        return $this->partnerID;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPartnerSecret()
+    {
+        return $this->partnerSecret;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMerchantID()
+    {
+        return $this->merchantID;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTerminalID()
+    {
+        return $this->terminalID;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getClientID()
+    {
+        return $this->clientID;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getClientSecret()
+    {
+        return $this->clientSecret;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRedirectUrl()
+    {
+        return $this->redirectUrl;
     }
 }
