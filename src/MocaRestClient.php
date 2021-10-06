@@ -130,8 +130,6 @@ class MocaRestClient {
         $response = null;
 
         $requestBody = \Unirest\Request\Body::json($requestBody);
-        var_dump("Header: "+ $headers);
-        var_dump("Body: "+ $requestBody);
 
         switch ($requestMethod) {
             case 'GET':
