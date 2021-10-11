@@ -117,7 +117,7 @@ class MocaTransaction
         return $partnerInfo;
     } 
 
-    /** 1. getRequest use for app to app
+    /** 1. apiChargeInit use for app to app
      * @param $partnerTxID
      * @param $amount
      * @param $currency
@@ -125,7 +125,7 @@ class MocaTransaction
      * @param mixed $brandName
      * @param mixed $isSync
      */
-    public function getRequest() {
+    public function apiChargeInit() {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -146,7 +146,7 @@ class MocaTransaction
         }
     }
 
-    /** 1. createDeeplinkUrl use for web to app
+    /** 1. apiCreateDeeplinkUrl use for web to app
      * @param $partnerTxID
      * @param $amount
      * @param $currency
@@ -154,7 +154,7 @@ class MocaTransaction
      * @param mixed $brandName
      * @param mixed $isSync
      */
-    public function createDeeplinkUrl() {
+    public function apiCreateDeeplinkUrl() {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -186,14 +186,14 @@ class MocaTransaction
         }
     }
 
-    /** 2. oAuthToken to get token to complete, check charge status and refund transaction
+    /** 2. apiOAuthToken to get token to complete, check charge status and refund transaction
      * @param $partnerTxID
      * @param $clientID
      * @param $clientSecret
      * @param mixed $redirect_url
      * @param mixed $code
      */
-    public function oAuthToken() {
+    public function apiOAuthToken() {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -210,11 +210,11 @@ class MocaTransaction
         }
     }
 
-    /** 3. chargeComplete to finished transaction
+    /** 3. apiChargeComplete to finished transaction
      * @param $partnerTxID
      * @param $access_token
      */
-    public function chargeComplete() {
+    public function apiChargeComplete() {
         try {
             $env = $this->getpartnerInfo();
             $requestBodyChargeComplete = array(
@@ -227,12 +227,12 @@ class MocaTransaction
         }
     }
 
-    /** 4. getChargeStatus to check status end of transaction
+    /** 4. apiGetChargeStatus to check status end of transaction
      * @param $partnerTxID
      * @param $currency
      * @param $access_token
      */
-    public function getChargeStatus() {
+    public function apiGetChargeStatus() {
         try {
             $env = $this->getpartnerInfo();
             $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['onaChargeStatus']);
@@ -244,7 +244,7 @@ class MocaTransaction
         }
     }
 
-    /** 5. RefundTxn to refund transaction
+    /** 5. apiRefundTxnOnA to refund transaction
      * @param $partnerTxID
      * @param $currency
      * @param $amount
@@ -252,7 +252,7 @@ class MocaTransaction
      * @param @originTxID
      * @param $access_token
      */
-    public function refundTxnOnA() {
+    public function apiRefundTxnOnA() {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -271,12 +271,12 @@ class MocaTransaction
         }
     }
 
-    /** 6. getRefundStatus to check status end of transaction
+    /** 6. apiGetRefundStatus to check status end of transaction
      * @param $partnerTxID
      * @param $currency
      * @param $access_token
      */
-    public function getRefundStatus() {
+    public function apiGetRefundStatus() {
         try {
             $env = $this->getpartnerInfo();
             $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['onaCheckRefundTxn']);
@@ -288,12 +288,12 @@ class MocaTransaction
         }
     }
 
-    /** 7. getOtcStatus to get OAuthCode
+    /** 7. apiGetOtcStatus to get OAuthCode
      * @param $partnerTxID
      * @param $currency
      * @param $access_token
      */
-    public function getOtcStatus() {
+    public function apiGetOtcStatus() {
         try {
             $env = $this->getpartnerInfo();
             $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['oneTimeChargeStatus']);
@@ -306,12 +306,12 @@ class MocaTransaction
     }
 
     // All api below for POS integration
-    /** 1. createQrCode to Create QR code for POS
+    /** 1. apiCreateQrCode to Create QR code for POS
      * @param $partnerTxID
      * @param $currency
      * @param $amount
      */
-    public function createQrCode() {
+    public function apiCreateQrCode() {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -333,12 +333,12 @@ class MocaTransaction
         }
     }
 
-    /** 2. cancelTxn if user QR do not scan or expire
+    /** 2. apiCancelTxn if user QR do not scan or expire
      * @param $partnerTxID
      * @param $currency
      * @param $originTxID
      */
-    public function cancelTxn() {
+    public function apiCancelTxn() {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -353,14 +353,14 @@ class MocaTransaction
         }
     }
 
-    /** 3. refundPosTxn to refund transaction already success.
+    /** 3. apiRefundPosTxn to refund transaction already success.
      * @param $partnerTxID
      * @param $currency
      * @param $originTxID
      * @param $amount
      * @param $description
      */
-    public function refundPosTxn() {
+    public function apiRefundPosTxn() {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -377,13 +377,13 @@ class MocaTransaction
         }
     }
 
-    /** 4. performTxn use if method is CPQR
+    /** 4. apiPerformTxn use if method is CPQR
      * @param $partnerTxID
      * @param $currency
      * @param $code
      * @param $amount
      */
-    public function performTxn() {
+    public function apiPerformTxn() {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -400,11 +400,11 @@ class MocaTransaction
     }
 
     // 
-    /** 5. Get charge status use if method is CPQR
+    /** 5. apiPosChargeStatus: Get charge status use if method is CPQR
      * @param $partnerTxID
      * @param $currency
      */
-    public function posChargeStatus() {
+    public function apiPosChargeStatus() {
         try {
             $env = $this->getpartnerInfo();
             $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['posChargeStatus']);
