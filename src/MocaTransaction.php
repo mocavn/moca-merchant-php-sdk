@@ -4,24 +4,8 @@ namespace Moca\Merchant;
 
 class MocaTransaction
 {
-
-    private $amount;
-    private $qrcode;
-    private $currency;
-    private $txType;
-    private $partnerTxID;
-    private $origPartnerTxID;
-    private $additionalInfo;
-    private $description;
-    private $brandName;
-    private $code;
-    private $originTxID;
-    private $refundPartnerTxID;
-    private $access_token;
-    private $state;
-
     private $environment;
-    private $locale;
+    private $country;
     private $partnerID;
     private $partnerSecret;
     private $merchantID;
@@ -30,10 +14,10 @@ class MocaTransaction
     private $clientSecret;
     private $redirectUrl;
 
-    public function __construct(string $environment, string $locale, string $partnerID, string $partnerSecret, string $merchantID, string $terminalID, string $clientID, string $clientSecret, string $redirectUrl)
+    public function __construct(string $environment, string $country, string $partnerID, string $partnerSecret, string $merchantID, string $terminalID, string $clientID, string $clientSecret, string $redirectUrl)
     {
         $this->environment = $environment;
-        $this->locale = $locale;
+        $this->country = $country;
         $this->partnerID = $partnerID;
         $this->partnerSecret = $partnerSecret;
         $this->merchantID = $merchantID;
@@ -69,21 +53,21 @@ class MocaTransaction
 
         if (strtoupper($this->getEnvironment()) == 'PRODUCTION') {
             # This to get the which domain can runing on their country
-            if (strtoupper($this->getLocale()) == 'VN') {
+            if (strtoupper($this->getCountry()) == 'VN') {
                 $partnerInfo['url'] = 'https://partner-gw.moca.vn';
             } else {
                 $partnerInfo['url'] = 'https://partner-api.grab.com';
             }
         } else {
             # This to get the which domain can runing on their country
-            if (strtoupper($this->getLocale()) == 'VN') {
+            if (strtoupper($this->getCountry()) == 'VN') {
                 $partnerInfo['url'] = 'https://stg-paysi.moca.vn';
             } else {
                 $partnerInfo['url'] = 'https://partner-api.stg-myteksi.com';
             }
         }
 
-        if (strtoupper($this->getLocale()) == 'VN') {
+        if (strtoupper($this->getCountry()) == 'VN') {
             $partnerInfo['chargeInit'] = "/mocapay/partner/v2/charge/init";
             $partnerInfo['OAuth2Token'] = "/grabid/v1/oauth2/token";
             $partnerInfo['chargeComplete'] = "/mocapay/partner/v2/charge/complete";
@@ -119,24 +103,25 @@ class MocaTransaction
 
     /** 1. apiChargeInit use for app to app
      * @param $partnerTxID
+     * @param $partnerGroupTxID
      * @param $amount
      * @param $currency
      * @param $description
      * @param mixed $brandName
      * @param mixed $isSync
      */
-    public function apiChargeInit() {
+    public function apiChargeInit($partnerTxID, $partnerGroupTxID, $amount, $currency = 'VND', $description, $isSync = false, $brandName) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
-                'partnerTxID'       => $this->getPartnerTxID(),
-                'partnerGroupTxID'  => $this->getPartnerTxID(),
-                'amount'            => $this->getAmount(),
-                'currency'          => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
+                'partnerTxID'       => $partnerTxID,
+                'partnerGroupTxID'  => $partnerGroupTxID,
+                'amount'            => $amount,
+                'currency'          => $currency,
                 'merchantID'        => $env['merchantID'],
-                'description'       => $this->getDescription(),
-                'isSync'            => false,
-                'metaInfo'          => array("brandName"=>$this->getBrandName() != ''? $this->getBrandName() : '' ),
+                'description'       => $description,
+                'isSync'            => $isSync,
+                'metaInfo'          => array("brandName"=>$brandName != ''? $brandName : '' ),
             );
             // This to get the which path can runing on their country
             return MocaRestClient::post($env, $env['chargeInit'], $requestBody, "ONLINE");
@@ -148,24 +133,26 @@ class MocaTransaction
 
     /** 1. apiCreateDeeplinkUrl use for web to app
      * @param $partnerTxID
+     * @param $partnerGroupTxID
      * @param $amount
      * @param $currency
      * @param $description
      * @param mixed $brandName
      * @param mixed $isSync
+     * @param $state
      */
-    public function apiCreateDeeplinkUrl() {
+    public function apiCreateDeeplinkUrl($partnerTxID, $partnerGroupTxID, $amount, $currency = 'VND', $description, $isSync = false, $brandName, $state) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
-                'partnerTxID'       => $this->getPartnerTxID(),
-                'partnerGroupTxID'  => $this->getPartnerTxID(),
-                'amount'            => $this->getAmount(),
-                'currency'          => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
+                'partnerTxID'       => $partnerTxID,
+                'partnerGroupTxID'  => $partnerGroupTxID,
+                'amount'            => $amount,
+                'currency'          => $currency,
                 'merchantID'        => $env['merchantID'],
-                'description'       => $this->getDescription(),
-                'isSync'            => false,
-                'metaInfo'          => array('brandName'=>$this->getBrandName()),
+                'description'       => $description,
+                'isSync'            => $isSync,
+                'metaInfo'          => array("brandName"=>$brandName != ''? $brandName : '' ),
             );
             
             $resp = MocaRestClient::post($env, $env['chargeInit'], $requestBody, "ONLINE");
@@ -173,10 +160,10 @@ class MocaTransaction
             if ($resp->code == 200) {
                 $bodyResp = $resp->body;
                 $scope = 'payment.vn.one_time_charge';
-                $codeChallenge = $this->base64URLEncode(base64_encode(hash('sha256', $this->base64URLEncode($this->getPartnerTxID().$this->getPartnerTxID()), true)));
+                $codeChallenge = $this->base64URLEncode(base64_encode(hash('sha256', $this->base64URLEncode($partnerTxID.$partnerTxID), true)));
                 $resp->body = $env['url'] .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.$this->getClientID().
                         '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.$this->generateRandomString(16).
-                        '&redirect_uri='.$this->getRedirectUrl().'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$this->getState();
+                        '&redirect_uri='.$this->getRedirectUrl().'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$state;
                 return $resp;
             } else {
                 return $resp;
@@ -187,22 +174,19 @@ class MocaTransaction
     }
 
     /** 2. apiOAuthToken to get token to complete, check charge status and refund transaction
-     * @param $partnerTxID
-     * @param $clientID
-     * @param $clientSecret
-     * @param mixed $redirect_url
-     * @param mixed $code
+     * @param $partnerTxID\
+     * @param $code
      */
-    public function apiOAuthToken() {
+    public function apiOAuthToken($partnerTxID,$code) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
                 'grant_type'    => "authorization_code",
                 'client_id'     => $env['clientID'],
                 'client_secret' => $env['clientSecret'],
-                'code_verifier' => $this->base64URLEncode($this->getPartnerTxID().$this->getPartnerTxID()),
+                'code_verifier' => $this->base64URLEncode($partnerTxID.$partnerTxID),
                 'redirect_uri'  => $this->getRedirectUrl(),
-                'code'          => $this->getCode(),
+                'code'          => $code,
             );
             return MocaRestClient::post($env, $env['OAuth2Token'], $requestBody, "ONLINE");
         } catch (Exception $e) {
@@ -214,14 +198,14 @@ class MocaTransaction
      * @param $partnerTxID
      * @param $access_token
      */
-    public function apiChargeComplete() {
+    public function apiChargeComplete($partnerTxID, $access_token) {
         try {
             $env = $this->getpartnerInfo();
             $requestBodyChargeComplete = array(
-                'partnerTxID'       => $this->getPartnerTxID(),
+                'partnerTxID'       => $partnerTxID,
             );
             
-            return MocaRestClient::post($env, $env['chargeComplete'], $requestBodyChargeComplete, "ONLINE",$this->getAccessToken());
+            return MocaRestClient::post($env, $env['chargeComplete'], $requestBodyChargeComplete, "ONLINE",$access_token);
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -232,13 +216,13 @@ class MocaTransaction
      * @param $currency
      * @param $access_token
      */
-    public function apiGetChargeStatus() {
+    public function apiGetChargeStatus($partnerTxID, $currency = 'VND', $access_token) {
         try {
             $env = $this->getpartnerInfo();
-            $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['onaChargeStatus']);
-            $url = str_replace("money",$this->getCurrency(),$url);
+            $url = str_replace("PartnerTxID",$partnerTxID,$env['onaChargeStatus']);
+            $url = str_replace("money",$currency,$url);
 
-            return MocaRestClient::get($env, $url, "ONLINE",$this->getAccessToken());
+            return MocaRestClient::get($env, $url, "ONLINE",$access_token);
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -246,26 +230,27 @@ class MocaTransaction
 
     /** 5. apiRefundTxnOnA to refund transaction
      * @param $partnerTxID
+     * @param $partnerGroupTxID
      * @param $currency
      * @param $amount
      * @param $description
-     * @param @originTxID
+     * @param $originTxID
      * @param $access_token
      */
-    public function apiRefundTxnOnA() {
+    public function apiRefundTxnOnA($partnerTxID, $partnerGroupTxID, $currency='VND', $amount, $description, $originTxID, $access_token) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
-                'partnerTxID'       => $this->getPartnerTxID(),
-                'partnerGroupTxID'  => $this->getPartnerTxID(),
-                'amount'            => $this->getAmount(),
-                'currency'          => $this->getCurrency(),
+                'partnerTxID'       => $partnerTxID,
+                'partnerGroupTxID'  => $partnerGroupTxID,
+                'amount'            => $amount,
+                'currency'          => $currency,
                 'merchantID'        => $env['merchantID'],
-                'description'       => $this->getDescription(),
-                'originTxID'        => $this->getOriginTxID(),
+                'description'       => $description,
+                'originTxID'        => $originTxID,
             );
             
-            return MocaRestClient::post($env, $env['onaRefundTxn'], $requestBody, "ONLINE",$this->getAccessToken());
+            return MocaRestClient::post($env, $env['onaRefundTxn'], $requestBody, "ONLINE",$access_token);
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -276,13 +261,13 @@ class MocaTransaction
      * @param $currency
      * @param $access_token
      */
-    public function apiGetRefundStatus() {
+    public function apiGetRefundStatus($partnerTxID,$currency ='VND', $access_token) {
         try {
             $env = $this->getpartnerInfo();
-            $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['onaCheckRefundTxn']);
-            $url = str_replace("money",$this->getCurrency(),$url);
+            $url = str_replace("PartnerTxID",$partnerTxID,$env['onaCheckRefundTxn']);
+            $url = str_replace("money",$currency,$url);
 
-            return MocaRestClient::get($env, $url,'application/json', "ONLINE",$this->getAccessToken());
+            return MocaRestClient::get($env, $url,'application/json', "ONLINE",$access_token);
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -293,13 +278,13 @@ class MocaTransaction
      * @param $currency
      * @param $access_token
      */
-    public function apiGetOtcStatus() {
+    public function apiGetOtcStatus($partnerTxID,$currency ='VND', $access_token) {
         try {
             $env = $this->getpartnerInfo();
-            $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['oneTimeChargeStatus']);
-            $url = str_replace("money",$this->getCurrency(),$url);
+            $url = str_replace("PartnerTxID",$partnerTxID,$env['oneTimeChargeStatus']);
+            $url = str_replace("money",$currency,$url);
             
-            return MocaRestClient::get($env, $url,'application/json', "ONLINE",$this->getAccessToken());
+            return MocaRestClient::get($env, $url,'application/json', "ONLINE",$access_token);
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -311,21 +296,16 @@ class MocaTransaction
      * @param $currency
      * @param $amount
      */
-    public function apiCreateQrCode() {
+    public function apiCreateQrCode($partnerTxID, $amount, $currency) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
-                'amount' => $this->getAmount(),
-                'currency' => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
-                'partnerTxID' => $this->getPartnerTxID()
+                'amount' => $amount,
+                'currency' => $currency() != ''? $currency: 'VND',
+                'partnerTxID' => $partnerTxID
             );
             
             $resp = MocaRestClient::post($env, $env['createQrCode'], $requestBody, "OFFLINE");
-
-            if ($resp->code == 200) {
-                $this->setOriginTxID($resp->body->TxID);
-                $this->setOrigPartnerTxID($this->getPartnerTxID());
-            }
 
             return $resp;
         } catch (Exception $e) {
@@ -338,16 +318,16 @@ class MocaTransaction
      * @param $currency
      * @param $originTxID
      */
-    public function apiCancelTxn() {
+    public function apiCancelTxn($partnerTxID, $currency, $originTxID) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
-                'currency' => $this->getCurrency(),
-                'origTxID' => $this->getOriginTxID(),
-                'partnerTxID' => $this->getPartnerTxID()
+                'currency' => $currency,
+                'origTxID' => $originTxID,
+                'partnerTxID' => $partnerTxID
             );
             
-            return MocaRestClient::put($env, str_replace("OriginTxID",$this->getOriginTxID(),$env['cancelQrTxn']), $requestBody, "OFFLINE");
+            return MocaRestClient::put($env, str_replace("OriginTxID",$originTxID,$env['cancelQrTxn']), $requestBody, "OFFLINE");
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -360,18 +340,18 @@ class MocaTransaction
      * @param $amount
      * @param $description
      */
-    public function apiRefundPosTxn() {
+    public function apiRefundPosTxn($partnerTxID, $currency = 'VND', $originTxID, $amount) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
-                'currency' => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
-                'origTxID' => $this->getOriginTxID(),
-                'amount'   => $this->getAmount(),
-                'reason'    => $this->getDescription(),
-                'partnerTxID' => $this->getPartnerTxID()
+                'currency' => $currency != ''? $currency: 'VND',
+                'origTxID' => $originTxID,
+                'amount'   => $amount,
+                'reason'    => $description,
+                'partnerTxID' => $partnerTxID
             );
             
-            return MocaRestClient::put($env, str_replace("OriginTxID",$this->getOriginTxID(),$env['posRefundTxn']), $requestBody, "OFFLINE");
+            return MocaRestClient::put($env, str_replace("OriginTxID",$originTxID,$env['posRefundTxn']), $requestBody, "OFFLINE");
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -383,14 +363,14 @@ class MocaTransaction
      * @param $code
      * @param $amount
      */
-    public function apiPerformTxn() {
+    public function apiPerformTxn($partnerTxID, $currency, $amount, $code) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
-                'amount' => $this->getAmount(),
-                'currency' => $this->getCurrency() != ''? $this->getCurrency(): 'VND',
-                'partnerTxID' => $this->getPartnerTxID(),
-                'code' => $this->getCode(),
+                'amount' => $amount,
+                'currency' => $currency != ''? $currency: 'VND',
+                'partnerTxID' => $partnerTxID,
+                'code' => $code,
             );
             
             return MocaRestClient::post($env, $env['performTxn'], $requestBody, "OFFLINE");
@@ -404,11 +384,11 @@ class MocaTransaction
      * @param $partnerTxID
      * @param $currency
      */
-    public function apiPosChargeStatus() {
+    public function apiPosChargeStatus($partnerTxID, $currency) {
         try {
             $env = $this->getpartnerInfo();
-            $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['posChargeStatus']);
-            $url = str_replace("money",$this->getCurrency(),$url);
+            $url = str_replace("PartnerTxID",$partnerTxID,$env['posChargeStatus']);
+            $url = str_replace("money",$currency,$url);
             
             return MocaRestClient::get($env, $url, '', "OFFLINE");
         } catch (Exception $e) {
@@ -433,244 +413,6 @@ class MocaTransaction
     /**
      * @return mixed
      */
-    public function getAccessToken()
-    {
-        return $this->access_token;
-    }
-
-    /**
-     * @param mixed $access_token
-     */
-    public function setAccessToken($access_token)
-    {
-        $this->access_token = $access_token;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getState()
-    {
-        return $this->state;
-    }
-
-    /**
-     * @param mixed $state
-     */
-    public function setState($state)
-    {
-        $this->state = $state;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getRefundPartnerTxID()
-    {
-        return $this->refundPartnerTxID;
-    }
-
-    /**
-     * @param mixed $refundPartnerTxID
-     */
-    public function setRefundPartnerTxID($refundPartnerTxID)
-    {
-        $this->refundPartnerTxID = $refundPartnerTxID;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getOriginTxID()
-    {
-        return $this->originTxID;
-    }
-
-    /**
-     * @param mixed $originTxID
-     */
-    public function setOriginTxID($originTxID)
-    {
-        $this->originTxID = $originTxID;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getCode()
-    {
-        return $this->code;
-    }
-
-    /**
-     * @param mixed $code
-     */
-    public function setCode($code)
-    {
-        $this->code = $code;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getAmount()
-    {
-        return $this->amount;
-    }
-
-    /**
-     * @param mixed $amount
-     */
-    public function setAmount($amount)
-    {
-        $this->amount = $amount;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getQrcode()
-    {
-        return $this->qrcode;
-    }
-
-    /**
-     * @param mixed $qrcode
-     */
-    public function setQrcode($qrcode)
-    {
-        $this->qrcode = $qrcode;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getCurrency()
-    {
-        return $this->currency;
-    }
-
-    /**
-     * @param mixed $currency
-     */
-    public function setCurrency($currency)
-    {
-        $this->currency = $currency;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getTxType()
-    {
-        return $this->txType;
-    }
-
-    /**
-     * @param mixed $txType
-     */
-    public function setTxType($txType)
-    {
-        $this->txType = $txType;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getPartnerTxID()
-    {
-        return $this->partnerTxID;
-    }
-
-    /**
-     * @param mixed $partnerTxID
-     */
-    public function setPartnerTxID($partnerTxID)
-    {
-        $this->partnerTxID = $partnerTxID;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getAdditionalInfo()
-    {
-        return $this->additionalInfo;
-    }
-
-    /**
-     * @param mixed $additionalInfo
-     */
-    public function setAdditionalInfo($additionalInfo)
-    {
-        $this->additionalInfo = $additionalInfo;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getDescription()
-    {
-        return $this->description;
-    }
-
-    /**
-     * @param mixed $description
-     */
-    public function setDescription($description)
-    {
-        $this->description = $description;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getBrandName()
-    {
-        return $this->brandName;
-    }
-
-    /**
-     * @param mixed $brandName
-     */
-    public function setBrandName($brandName)
-    {
-        $this->brandName = $brandName;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getOrigPartnerTxID()
-    {
-        return $this->origPartnerTxID;
-    }
-
-    /**
-     * @param mixed $origPartnerTxID
-     */
-    public function setOrigPartnerTxID($origPartnerTxID)
-    {
-        $this->origPartnerTxID = $origPartnerTxID;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
     public function getEnvironment()
     {
         return $this->environment;
@@ -679,9 +421,9 @@ class MocaTransaction
     /**
      * @return mixed
      */
-    public function getLocale()
+    public function getCountry()
     {
-        return $this->locale;
+        return $this->country;
     }
 
     /**
