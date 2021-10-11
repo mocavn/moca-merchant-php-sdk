@@ -21,7 +21,7 @@ class MocaTransaction
     private $state;
 
     private $environment;
-    private $locate;
+    private $locale;
     private $partnerID;
     private $partnerSecret;
     private $merchantID;
@@ -30,10 +30,10 @@ class MocaTransaction
     private $clientSecret;
     private $redirectUrl;
 
-    public function __construct(string $environment, string $locate, string $partnerID, string $partnerSecret, string $merchantID, string $terminalID, string $clientID, string $clientSecret, string $redirectUrl)
+    public function __construct(string $environment, string $locale, string $partnerID, string $partnerSecret, string $merchantID, string $terminalID, string $clientID, string $clientSecret, string $redirectUrl)
     {
         $this->environment = $environment;
-        $this->locate = $locate;
+        $this->locale = $locale;
         $this->partnerID = $partnerID;
         $this->partnerSecret = $partnerSecret;
         $this->merchantID = $merchantID;
@@ -69,21 +69,21 @@ class MocaTransaction
 
         if (strtoupper($this->getEnvironment()) == 'PRODUCTION') {
             # This to get the which domain can runing on their country
-            if (strtoupper($this->getLocate()) == 'VN') {
+            if (strtoupper($this->getLocale()) == 'VN') {
                 $partnerInfo['url'] = 'https://partner-gw.moca.vn';
             } else {
                 $partnerInfo['url'] = 'https://partner-api.grab.com';
             }
         } else {
             # This to get the which domain can runing on their country
-            if (strtoupper($this->getLocate()) == 'VN') {
+            if (strtoupper($this->getLocale()) == 'VN') {
                 $partnerInfo['url'] = 'https://stg-paysi.moca.vn';
             } else {
                 $partnerInfo['url'] = 'https://partner-api.stg-myteksi.com';
             }
         }
 
-        if (strtoupper($this->getLocate()) == 'VN') {
+        if (strtoupper($this->getLocale()) == 'VN') {
             $partnerInfo['chargeInit'] = "/mocapay/partner/v2/charge/init";
             $partnerInfo['OAuth2Token'] = "/grabid/v1/oauth2/token";
             $partnerInfo['chargeComplete'] = "/mocapay/partner/v2/charge/complete";
@@ -174,9 +174,9 @@ class MocaTransaction
                 $bodyResp = $resp->body;
                 $scope = 'payment.vn.one_time_charge';
                 $codeChallenge = $this->base64URLEncode(base64_encode(hash('sha256', $this->base64URLEncode($this->getPartnerTxID().$this->getPartnerTxID()), true)));
-                $resp->body = $env['url'] .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.getenv('MOCA_MERCHANT_CLIENT_ID').
+                $resp->body = $env['url'] .'/grabid/v1/oauth2/authorize?acr_values=consent_ctx%3AcountryCode%3DVN,currency%3DVND&client_id='.$this->getClientID().
                         '&code_challenge='.$codeChallenge.'&code_challenge_method=S256&nonce='.$this->generateRandomString(16).
-                        '&redirect_uri='.getenv('MOCA_MERCHANT_REDIRECT_URI').'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$this->getState();
+                        '&redirect_uri='.$this->getRedirectUrl().'&request='.$bodyResp->request.'&response_type=code&scope='.$scope.'&state='.$this->getState();
                 return $resp;
             } else {
                 return $resp;
@@ -410,7 +410,7 @@ class MocaTransaction
             $url = str_replace("PartnerTxID",$this->getPartnerTxID(),$env['posChargeStatus']);
             $url = str_replace("money",$this->getCurrency(),$url);
             
-            return MocaRestClient::post($env, $url, $requestBody, "OFFLINE");
+            return MocaRestClient::get($env, $url, '', "OFFLINE");
         } catch (Exception $e) {
             return 'Caught exception: ' . $e->getMessage() . "\n";
         }
@@ -679,9 +679,9 @@ class MocaTransaction
     /**
      * @return mixed
      */
-    public function getLocate()
+    public function getLocale()
     {
-        return $this->locate;
+        return $this->locale;
     }
 
     /**
