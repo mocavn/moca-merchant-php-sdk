@@ -110,7 +110,7 @@ class MocaTransaction
      * @param mixed $brandName
      * @param mixed $isSync
      */
-    public function apiChargeInit($partnerTxID, $partnerGroupTxID, $amount, $currency = 'VND', $description, $isSync = false, $brandName) {
+    public function apiChargeInit($partnerTxID, $partnerGroupTxID, $amount, $currency, $description, $isSync = false, $brandName) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -141,7 +141,7 @@ class MocaTransaction
      * @param mixed $isSync
      * @param $state
      */
-    public function apiCreateDeeplinkUrl($partnerTxID, $partnerGroupTxID, $amount, $currency = 'VND', $description, $isSync = false, $brandName, $state) {
+    public function apiCreateDeeplinkUrl($partnerTxID, $partnerGroupTxID, $amount, $currency, $description, $isSync = false, $brandName, $state) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -216,7 +216,7 @@ class MocaTransaction
      * @param $currency
      * @param $access_token
      */
-    public function apiGetChargeStatus($partnerTxID, $currency = 'VND', $access_token) {
+    public function apiGetChargeStatus($partnerTxID, $currency, $access_token) {
         try {
             $env = $this->getpartnerInfo();
             $url = str_replace("PartnerTxID",$partnerTxID,$env['onaChargeStatus']);
@@ -237,7 +237,7 @@ class MocaTransaction
      * @param $originTxID
      * @param $access_token
      */
-    public function apiRefundTxnOnA($partnerTxID, $partnerGroupTxID, $currency='VND', $amount, $description, $originTxID, $access_token) {
+    public function apiRefundTxnOnA($partnerTxID, $partnerGroupTxID, $currency, $amount, $description, $originTxID, $access_token) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
@@ -278,7 +278,7 @@ class MocaTransaction
      * @param $currency
      * @param $access_token
      */
-    public function apiGetOtcStatus($partnerTxID,$currency ='VND', $access_token) {
+    public function apiGetOtcStatus($partnerTxID,$currency, $access_token) {
         try {
             $env = $this->getpartnerInfo();
             $url = str_replace("PartnerTxID",$partnerTxID,$env['oneTimeChargeStatus']);
@@ -301,7 +301,7 @@ class MocaTransaction
             $env = $this->getpartnerInfo();
             $requestBody = array(
                 'amount' => $amount,
-                'currency' => $currency() != ''? $currency: 'VND',
+                'currency' => $currency,
                 'partnerTxID' => $partnerTxID
             );
             
@@ -340,11 +340,11 @@ class MocaTransaction
      * @param $amount
      * @param $description
      */
-    public function apiRefundPosTxn($partnerTxID, $currency = 'VND', $originTxID, $amount) {
+    public function apiRefundPosTxn($partnerTxID, $currency, $originTxID, $amount, $description) {
         try {
             $env = $this->getpartnerInfo();
             $requestBody = array(
-                'currency' => $currency != ''? $currency: 'VND',
+                'currency' => $currency,
                 'origTxID' => $originTxID,
                 'amount'   => $amount,
                 'reason'    => $description,
@@ -368,7 +368,7 @@ class MocaTransaction
             $env = $this->getpartnerInfo();
             $requestBody = array(
                 'amount' => $amount,
-                'currency' => $currency != ''? $currency: 'VND',
+                'currency' => $currency,
                 'partnerTxID' => $partnerTxID,
                 'code' => $code,
             );
