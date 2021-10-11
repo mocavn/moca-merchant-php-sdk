@@ -29,7 +29,6 @@ class MocaTransaction
     private $clientID;
     private $clientSecret;
     private $redirectUrl;
-    private $endpoint;
 
     public function __construct(string $environment, string $locate, string $partnerID, string $partnerSecret, string $merchantID, string $terminalID, string $clientID, string $clientSecret, string $redirectUrl)
     {
@@ -68,23 +67,23 @@ class MocaTransaction
             'posChargeStatus'   => '',
         );
 
-        if ($this->getEnvironment() == 'PRODUCTION') {
+        if (strtoupper($this->getEnvironment()) == 'PRODUCTION') {
             # This to get the which domain can runing on their country
-            if ($this->getLocate() == 'VN') {
+            if (strtoupper($this->getLocate()) == 'VN') {
                 $partnerInfo['url'] = 'https://partner-gw.moca.vn';
             } else {
                 $partnerInfo['url'] = 'https://partner-api.grab.com';
             }
         } else {
             # This to get the which domain can runing on their country
-            if ($this->getLocate() == 'VN') {
+            if (strtoupper($this->getLocate()) == 'VN') {
                 $partnerInfo['url'] = 'https://stg-paysi.moca.vn';
             } else {
                 $partnerInfo['url'] = 'https://partner-api.stg-myteksi.com';
             }
         }
 
-        if ($this->getLocate() == 'VN') {
+        if (strtoupper($this->getLocate()) == 'VN') {
             $partnerInfo['chargeInit'] = "/mocapay/partner/v2/charge/init";
             $partnerInfo['OAuth2Token'] = "/grabid/v1/oauth2/token";
             $partnerInfo['chargeComplete'] = "/mocapay/partner/v2/charge/complete";
@@ -187,7 +186,13 @@ class MocaTransaction
         }
     }
 
-    // 2. oAuthToken to get token to complete, check charge status and refund transaction
+    /** 2. oAuthToken to get token to complete, check charge status and refund transaction
+     * @param $partnerTxID
+     * @param $clientID
+     * @param $clientSecret
+     * @param mixed $redirect_url
+     * @param mixed $code
+     */
     public function oAuthToken() {
         try {
             $env = $this->getpartnerInfo();
@@ -205,7 +210,10 @@ class MocaTransaction
         }
     }
 
-    // 3. chargeComplete to finished transaction
+    /** 3. chargeComplete to finished transaction
+     * @param $partnerTxID
+     * @param $access_token
+     */
     public function chargeComplete() {
         try {
             $env = $this->getpartnerInfo();
@@ -219,7 +227,11 @@ class MocaTransaction
         }
     }
 
-    // 4. getChargeStatus to check status end of transaction
+    /** 4. getChargeStatus to check status end of transaction
+     * @param $partnerTxID
+     * @param $currency
+     * @param $access_token
+     */
     public function getChargeStatus() {
         try {
             $env = $this->getpartnerInfo();
@@ -232,7 +244,14 @@ class MocaTransaction
         }
     }
 
-    // 5. RefundTxn to refund transaction
+    /** 5. RefundTxn to refund transaction
+     * @param $partnerTxID
+     * @param $currency
+     * @param $amount
+     * @param $description
+     * @param @originTxID
+     * @param $access_token
+     */
     public function refundTxnOnA() {
         try {
             $env = $this->getpartnerInfo();
@@ -241,7 +260,7 @@ class MocaTransaction
                 'partnerGroupTxID'  => $this->getPartnerTxID(),
                 'amount'            => $this->getAmount(),
                 'currency'          => $this->getCurrency(),
-                'merchantID'        => getenv('MOCA_MERCHANT_MERCHANT_ID'),
+                'merchantID'        => $env['merchantID'],
                 'description'       => $this->getDescription(),
                 'originTxID'        => $this->getOriginTxID(),
             );
@@ -252,7 +271,11 @@ class MocaTransaction
         }
     }
 
-    // 6. getRefundStatus to check status end of transaction
+    /** 6. getRefundStatus to check status end of transaction
+     * @param $partnerTxID
+     * @param $currency
+     * @param $access_token
+     */
     public function getRefundStatus() {
         try {
             $env = $this->getpartnerInfo();
@@ -265,7 +288,11 @@ class MocaTransaction
         }
     }
 
-    // 7. getOtcStatus to get OAuthCode
+    /** 7. getOtcStatus to get OAuthCode
+     * @param $partnerTxID
+     * @param $currency
+     * @param $access_token
+     */
     public function getOtcStatus() {
         try {
             $env = $this->getpartnerInfo();
@@ -279,7 +306,11 @@ class MocaTransaction
     }
 
     // All api below for POS integration
-    // 1. createQrCode to Create QR code for POS
+    /** 1. createQrCode to Create QR code for POS
+     * @param $partnerTxID
+     * @param $currency
+     * @param $amount
+     */
     public function createQrCode() {
         try {
             $env = $this->getpartnerInfo();
@@ -302,7 +333,11 @@ class MocaTransaction
         }
     }
 
-    // 2. cancelTxn if user QR do not scan or expire
+    /** 2. cancelTxn if user QR do not scan or expire
+     * @param $partnerTxID
+     * @param $currency
+     * @param $originTxID
+     */
     public function cancelTxn() {
         try {
             $env = $this->getpartnerInfo();
@@ -318,7 +353,13 @@ class MocaTransaction
         }
     }
 
-    // 3. refundPosTxn to refund transaction already success.
+    /** 3. refundPosTxn to refund transaction already success.
+     * @param $partnerTxID
+     * @param $currency
+     * @param $originTxID
+     * @param $amount
+     * @param $description
+     */
     public function refundPosTxn() {
         try {
             $env = $this->getpartnerInfo();
@@ -336,7 +377,12 @@ class MocaTransaction
         }
     }
 
-    // 4. performTxn use if method is CPQR
+    /** 4. performTxn use if method is CPQR
+     * @param $partnerTxID
+     * @param $currency
+     * @param $code
+     * @param $amount
+     */
     public function performTxn() {
         try {
             $env = $this->getpartnerInfo();
@@ -353,7 +399,11 @@ class MocaTransaction
         }
     }
 
-    // 5.  use if method is CPQR
+    // 
+    /** 5. Get charge status use if method is CPQR
+     * @param $partnerTxID
+     * @param $currency
+     */
     public function posChargeStatus() {
         try {
             $env = $this->getpartnerInfo();
