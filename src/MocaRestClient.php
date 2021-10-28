@@ -88,6 +88,7 @@ class MocaRestClient {
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
                 'Date' => $now,
+                'X-Request-ID' => $msgID,
                 'X-GID-AUX-POP' => MocaRestClient::generatePOPSig($env, $access_token,$timestamp),
                 'Authorization' => 'Bearer ' . $access_token
             );
@@ -96,12 +97,14 @@ class MocaRestClient {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
+                'X-Request-ID' => $msgID,
             );
         // set header for api charge init
         } else if($type == "ONLINE" && $apiUrl != $env['chargeInit']) {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
+                'X-Request-ID' => $msgID,
                 'Date' => $now,
                 'Authorization' => 'Bearer ' . $access_token
             );
@@ -110,6 +113,7 @@ class MocaRestClient {
             $headers = array(
                 'Accept' => 'application/json',
                 'Content-Type' => $contentType,
+                'X-Request-ID' => $msgID,
                 'Date' => $now,
                 'Authorization' => ($partnerID . ':' . $hmac)
             );
