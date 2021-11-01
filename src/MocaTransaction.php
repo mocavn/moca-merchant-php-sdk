@@ -30,12 +30,14 @@ class MocaTransaction
     
     public function getpartnerInfo() {
         $partnerInfo = array(
+            'sdkVersion'        => '1.0.0',
             'partnerID'         => $this->getPartnerID(),
             'partnerSecret'     => $this->getPartnerSecret(),
             'merchantID'        => $this->getMerchantID(),
             'terminalID'        => $this->getTerminalID(),
             'clientID'          => $this->getClientID(),
             'clientSecret'      => $this->getClientSecret(),
+            'country'           => strtoupper($this->getCountry()),
             'url'               => '',
             'chargeInit'        => '',
             'OAuth2Token'       => '',
