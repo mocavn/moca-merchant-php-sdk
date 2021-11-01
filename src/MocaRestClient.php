@@ -90,14 +90,20 @@ class MocaRestClient {
                 'Date' => $now,
                 'X-Request-ID' => $msgID,
                 'X-GID-AUX-POP' => MocaRestClient::generatePOPSig($env, $access_token,$timestamp),
-                'Authorization' => 'Bearer ' . $access_token
+                'Authorization' => 'Bearer ' . $access_token,
+                'X-Country' => $env['country'],
+                'X-Sdk-Version' => $env['sdkVersion'],
+                'X-Api-Path' => $apiUrl
             );
         // set header for API oauth token    
         } else if($apiUrl == $env['OAuth2Token']) {
             $headers = array(
                 'Accept' => 'application/json',
-                'Content-Type' => $contentType,
                 'X-Request-ID' => $msgID,
+                'Content-Type' => $contentType,
+                'X-Country' => $env['country'],
+                'X-Sdk-Version' => $env['sdkVersion'],
+                'X-Api-Path' => $apiUrl
             );
         // set header for api charge init
         } else if($type == "ONLINE" && $apiUrl != $env['chargeInit']) {
@@ -106,7 +112,10 @@ class MocaRestClient {
                 'Content-Type' => $contentType,
                 'X-Request-ID' => $msgID,
                 'Date' => $now,
-                'Authorization' => 'Bearer ' . $access_token
+                'Authorization' => 'Bearer ' . $access_token,
+                'X-Country' => $env['country'],
+                'X-Sdk-Version' => $env['sdkVersion'],
+                'X-Api-Path' => $apiUrl
             );
         // default header
         } else {
@@ -115,7 +124,10 @@ class MocaRestClient {
                 'Content-Type' => $contentType,
                 'X-Request-ID' => $msgID,
                 'Date' => $now,
-                'Authorization' => ($partnerID . ':' . $hmac)
+                'Authorization' => ($partnerID . ':' . $hmac),
+                'X-Country' => $env['country'],
+                'X-Sdk-Version' => $env['sdkVersion'],
+                'X-Api-Path' => $apiUrl
             );
         }
 
