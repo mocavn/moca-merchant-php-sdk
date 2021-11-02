@@ -91,9 +91,8 @@ class MocaRestClient {
                 'X-Request-ID' => $msgID,
                 'X-GID-AUX-POP' => MocaRestClient::generatePOPSig($env, $access_token,$timestamp),
                 'Authorization' => 'Bearer ' . $access_token,
-                'X-Country' => $env['country'],
+                'X-Sdk-Country' => $env['country'],
                 'X-Sdk-Version' => $env['sdkVersion'],
-                'X-Api-Path' => $apiUrl
             );
         // set header for API oauth token    
         } else if($apiUrl == $env['OAuth2Token']) {
@@ -101,9 +100,8 @@ class MocaRestClient {
                 'Accept' => 'application/json',
                 'X-Request-ID' => $msgID,
                 'Content-Type' => $contentType,
-                'X-Country' => $env['country'],
+                'X-Sdk-Country' => $env['country'],
                 'X-Sdk-Version' => $env['sdkVersion'],
-                'X-Api-Path' => $apiUrl
             );
         // set header for api charge init
         } else if($type == "ONLINE" && $apiUrl != $env['chargeInit']) {
@@ -113,9 +111,8 @@ class MocaRestClient {
                 'X-Request-ID' => $msgID,
                 'Date' => $now,
                 'Authorization' => 'Bearer ' . $access_token,
-                'X-Country' => $env['country'],
+                'X-Sdk-Country' => $env['country'],
                 'X-Sdk-Version' => $env['sdkVersion'],
-                'X-Api-Path' => $apiUrl
             );
         // default header
         } else {
