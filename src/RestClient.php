@@ -98,7 +98,6 @@ class RestClient {
         // default
         } else {
             $headers = array_merge($headers, array(
-                'X-Request-ID' => $msgID,
                 'Date' => $gmtTime,
                 'Authorization' => ($env['partnerID'] . ':' . $hmac),
             ));
