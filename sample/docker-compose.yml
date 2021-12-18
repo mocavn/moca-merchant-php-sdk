@@ -1,0 +1,47 @@
+version: '3'
+services:
+
+  #PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: AppPHP
+    restart: unless-stopped
+    tty: true
+    env_file: .env
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-network
+
+  #Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: WebPhp
+    restart: unless-stopped
+    tty: true
+    ports:
+      # I'm using port 8888 to access docker to avoid conflict with port 80
+      # in my local environment
+      - "8888:80"
+      - "7443:443"
+    volumes:
+      - ./:/var/www/html
+      - ./nginx/conf-compose.d:/etc/nginx/conf.d/default.conf
+    networks:
+      - app-network
+
+#Docker Networks
+networks:
+  app-network:
+    driver: bridge
+#Volumes
+volumes:
+  dbdata:
+    driver: local
